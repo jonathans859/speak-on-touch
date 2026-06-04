@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Accessibilitroller</string>
+    <string name="accessibility_service_label">Accessibilitroller</string>
+    <string name="accessibility_service_description">Reads UI elements aloud when you touch them, inspired by iOS Zoom Controller</string>
+
+    <string name="section_permissions">Permissions</string>
+    <string name="section_button_appearance">Button Appearance</string>
+    <string name="section_gesture_actions">Gesture Actions</string>
+
+    <string name="permission_overlay_title">Draw over other apps</string>
+    <string name="permission_accessibility_title">Accessibility Service</string>
+    <string name="permission_notifications_title">Post Notifications</string>
+
+    <string name="grant">Grant</string>
+    <string name="granted">Granted</string>
+    <string name="open_settings">Open Settings</string>
+
+    <string name="style_circle">Circle</string>
+    <string name="style_semicircle">Semi-circle</string>
+
+    <string name="gesture_single_press">Single press</string>
+    <string name="gesture_double_press">Double press</string>
+    <string name="gesture_press_hold">Press and hold</string>
+    <string name="gesture_double_hold">Double press and hold</string>
+
+    <string name="action_speak_on_touch">Speak on touch</string>
+    <string name="action_enable_drag">Enable drag</string>
+    <string name="action_none">None</string>
+
+    <string name="toggle_label">Floating Button Active</string>
+
+    <string name="notification_title">Accessibilitroller is running</string>
+    <string name="notification_channel_name">Accessibilitroller</string>
+
+    <string name="missing_permissions">Missing permissions: </string>
+</resources>
