@@ -33,7 +33,7 @@ public class FloatingButtonService extends Service {
 
     private static final String CHANNEL_ID = "accessibilitroller_channel";
     private static final int NOTIFICATION_ID = 1001;
-    private static final long SPEAK_DEBOUNCE_MS = 80;
+    private static final long SPEAK_DEBOUNCE_MS = 30;
     private static final long SINGLE_PRESS_TIMEOUT_MS = 200;
 
     private static boolean running = false;
