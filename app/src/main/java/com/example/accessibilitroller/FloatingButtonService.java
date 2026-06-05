@@ -400,16 +400,28 @@ public class FloatingButtonService extends Service {
         }
     }
 
+    private boolean needsDoubleTapWindow() {
+        return !SettingsManager.ACTION_NONE.equals(
+                settings.getGestureAction(SettingsManager.KEY_GESTURE_DOUBLE))
+                || !SettingsManager.ACTION_NONE.equals(
+                settings.getGestureAction(SettingsManager.KEY_GESTURE_DOUBLE_HOLD));
+    }
+
     private void onGestureUp() {
         if (gestureState == GESTURE_FIRST_DOWN) {
             cancelLongPress();
             if (!longPressFired) {
-                gestureState = GESTURE_FIRST_WAITING;
-                resolutionRunnable = () -> {
+                if (needsDoubleTapWindow()) {
+                    gestureState = GESTURE_FIRST_WAITING;
+                    resolutionRunnable = () -> {
+                        gestureState = GESTURE_IDLE;
+                        executeGestureAction(SettingsManager.KEY_GESTURE_SINGLE);
+                    };
+                    gestureHandler.postDelayed(resolutionRunnable, SINGLE_PRESS_TIMEOUT_MS);
+                } else {
                     gestureState = GESTURE_IDLE;
                     executeGestureAction(SettingsManager.KEY_GESTURE_SINGLE);
-                };
-                gestureHandler.postDelayed(resolutionRunnable, SINGLE_PRESS_TIMEOUT_MS);
+                }
             } else {
                 gestureState = GESTURE_IDLE;
             }

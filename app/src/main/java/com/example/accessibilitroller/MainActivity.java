@@ -9,7 +9,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.Voice;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -24,8 +23,6 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -306,40 +303,27 @@ public class MainActivity extends AppCompatActivity {
 
         mainTts = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
-                populateTtsVoices();
+                populateTtsEngines();
             }
         });
     }
 
-    private void populateTtsVoices() {
-        Set<Voice> voices = mainTts.getVoices();
-        if (voices == null || voices.isEmpty()) return;
+    private void populateTtsEngines() {
+        List<TextToSpeech.EngineInfo> engines = mainTts.getEngines();
+        if (engines == null) engines = new ArrayList<>();
+        List<TextToSpeech.EngineInfo> sorted = new ArrayList<>(engines);
+        sorted.sort((a, b) -> a.label.compareTo(b.label));
 
-        String lang = Locale.getDefault().getLanguage();
-        List<Voice> filtered = new ArrayList<>();
-        for (Voice v : voices) {
-            if (!v.isNetworkConnectionRequired()
-                    && v.getLocale().getLanguage().equals(lang)) {
-                filtered.add(v);
-            }
-        }
-        if (filtered.isEmpty()) {
-            for (Voice v : voices) {
-                if (!v.isNetworkConnectionRequired()) filtered.add(v);
-            }
-        }
-        filtered.sort((a, b) -> a.getName().compareTo(b.getName()));
-
-        ttsVoiceKeys = new String[filtered.size() + 1];
-        String[] labels = new String[filtered.size() + 1];
+        ttsVoiceKeys = new String[sorted.size() + 1];
+        String[] labels = new String[sorted.size() + 1];
         ttsVoiceKeys[0] = "";
         labels[0] = getString(R.string.tts_voice_default);
-        for (int i = 0; i < filtered.size(); i++) {
-            ttsVoiceKeys[i + 1] = filtered.get(i).getName();
-            labels[i + 1] = filtered.get(i).getName();
+        for (int i = 0; i < sorted.size(); i++) {
+            ttsVoiceKeys[i + 1] = sorted.get(i).name;
+            labels[i + 1] = sorted.get(i).label;
         }
 
-        String savedKey = settings.getTtsVoice();
+        String savedKey = settings.getTtsEngine();
         int savedPos = 0;
         for (int i = 0; i < ttsVoiceKeys.length; i++) {
             if (ttsVoiceKeys[i].equals(savedKey)) { savedPos = i; break; }
@@ -357,7 +341,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                     if (initializing) { initializing = false; return; }
-                    settings.setTtsVoice(ttsVoiceKeys[position]);
+                    settings.setTtsEngine(ttsVoiceKeys[position]);
                 }
                 @Override
                 public void onNothingSelected(AdapterView<?> parent) {}

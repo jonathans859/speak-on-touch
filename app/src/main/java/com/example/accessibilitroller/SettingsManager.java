@@ -15,7 +15,7 @@ public class SettingsManager {
     public static final String KEY_GESTURE_DOUBLE_HOLD = "gesture_double_hold";
     public static final String KEY_BUTTON_POS_X         = "button_pos_x";
     public static final String KEY_BUTTON_POS_Y         = "button_pos_y";
-    public static final String KEY_TTS_VOICE            = "tts_voice";
+    public static final String KEY_TTS_ENGINE            = "tts_engine";
     public static final String KEY_BUTTON_COLOR         = "button_color";
     public static final String KEY_SPEAK_AUTO_DISABLE   = "speak_auto_disable";
     public static final String KEY_HIGHLIGHT_ENABLED     = "highlight_enabled";
@@ -78,12 +78,12 @@ public class SettingsManager {
              .apply();
     }
 
-    public String getTtsVoice() {
-        return prefs.getString(KEY_TTS_VOICE, "");
+    public String getTtsEngine() {
+        return prefs.getString(KEY_TTS_ENGINE, "");
     }
 
-    public void setTtsVoice(String voiceName) {
-        prefs.edit().putString(KEY_TTS_VOICE, voiceName).apply();
+    public void setTtsEngine(String enginePackage) {
+        prefs.edit().putString(KEY_TTS_ENGINE, enginePackage).apply();
     }
 
     public int getButtonColor() {

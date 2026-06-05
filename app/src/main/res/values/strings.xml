@@ -36,7 +36,7 @@
     <string name="missing_permissions">Missing permissions: </string>
 
     <string name="section_tts">Text-to-Speech</string>
-    <string name="tts_voice_label">Voice</string>
+    <string name="tts_voice_label">Engine</string>
     <string name="tts_voice_default">System default</string>
 
     <string name="button_color_label">Button colour</string>

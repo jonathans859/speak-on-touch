@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
@@ -19,7 +20,6 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.util.Locale;
-import java.util.Set;
 
 public class AccessibilitrollerService extends AccessibilityService {
 
@@ -34,6 +34,11 @@ public class AccessibilitrollerService extends AccessibilityService {
     private View highlightView;
     private final Handler highlightHandler = new Handler(Looper.getMainLooper());
     private final Runnable hideHighlight = this::removeHighlight;
+
+    private final SharedPreferences.OnSharedPreferenceChangeListener engineListener =
+            (prefs, key) -> {
+                if (SettingsManager.KEY_TTS_ENGINE.equals(key)) reinitTts();
+            };
 
     private TextToSpeech tts;
     private boolean ttsReady = false;
@@ -60,16 +65,8 @@ public class AccessibilitrollerService extends AccessibilityService {
     protected void onServiceConnected() {
         super.onServiceConnected();
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-
-        tts = new TextToSpeech(this, status -> {
-            if (status == TextToSpeech.SUCCESS) {
-                applyVoiceOrLocale();
-            } else {
-                Log.e(TAG, "TTS init failed with status: " + status);
-                tts = null;
-            }
-        });
-
+        SettingsManager.getInstance(this).registerListener(engineListener);
+        initTts();
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 speakReceiver, new IntentFilter(ACTION_SPEAK_AT));
     }
@@ -82,34 +79,46 @@ public class AccessibilitrollerService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        SettingsManager.getInstance(this).unregisterListener(engineListener);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(speakReceiver);
         highlightHandler.removeCallbacksAndMessages(null);
         removeHighlight();
+        shutdownTts();
+        super.onDestroy();
+    }
+
+    // ── TTS engine setup ──────────────────────────────────────────────────────
+
+    private void initTts() {
+        String engine = SettingsManager.getInstance(this).getTtsEngine();
+        TextToSpeech.OnInitListener listener = status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                applyLocale();
+            } else {
+                Log.e(TAG, "TTS init failed: " + status);
+                tts = null;
+            }
+        };
+        tts = engine.isEmpty()
+                ? new TextToSpeech(this, listener)
+                : new TextToSpeech(this, listener, engine);
+    }
+
+    private void reinitTts() {
+        shutdownTts();
+        initTts();
+    }
+
+    private void shutdownTts() {
         if (tts != null) {
             tts.stop();
             tts.shutdown();
             tts = null;
         }
         ttsReady = false;
-        super.onDestroy();
     }
 
-    // ── TTS voice setup ───────────────────────────────────────────────────────
-
-    private void applyVoiceOrLocale() {
-        String savedName = SettingsManager.getInstance(this).getTtsVoice();
-        if (!savedName.isEmpty()) {
-            Set<android.speech.tts.Voice> voices = tts.getVoices();
-            if (voices != null) {
-                for (android.speech.tts.Voice v : voices) {
-                    if (v.getName().equals(savedName)) {
-                        tts.setVoice(v);
-                        ttsReady = true;
-                        return;
-                    }
-                }
-            }
-        }
+    private void applyLocale() {
         int result = tts.setLanguage(Locale.getDefault());
         if (result == TextToSpeech.LANG_MISSING_DATA
                 || result == TextToSpeech.LANG_NOT_SUPPORTED) {
