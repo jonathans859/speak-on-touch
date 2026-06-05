@@ -8,7 +8,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.GradientDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Handler;
