@@ -281,7 +281,33 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- SECTION 4: Service Toggle -->
+        <!-- SECTION 4: TTS Voice -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/section_tts"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/tts_voice_label"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+            <Spinner
+                android:id="@+id/spinner_tts_voice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- SECTION 5: Service Toggle -->
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switch_service"
             android:layout_width="match_parent"

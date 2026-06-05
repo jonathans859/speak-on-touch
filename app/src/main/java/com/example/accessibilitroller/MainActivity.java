@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -17,6 +19,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spinnerHold;
     private Spinner spinnerDoubleHold;
 
+    private Spinner spinnerTtsVoice;
+    private TextToSpeech mainTts;
+    private String[] ttsVoiceKeys;
+
     private SwitchMaterial switchService;
 
     private ActivityResultLauncher<String> notificationPermLauncher;
@@ -55,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         initPermissionSection();
         initButtonStyleSection();
         initGestureSection();
+        initTtsSection();
         initServiceToggle();
     }
 
@@ -64,6 +75,18 @@ public class MainActivity extends AppCompatActivity {
         refreshPermissionCards();
         refreshServiceToggle();
     }
+
+    @Override
+    protected void onDestroy() {
+        if (mainTts != null) {
+            mainTts.stop();
+            mainTts.shutdown();
+            mainTts = null;
+        }
+        super.onDestroy();
+    }
+
+    // ── Permissions ───────────────────────────────────────────────────────────
 
     private void initPermissionSection() {
         ivOverlayStatus = findViewById(R.id.iv_overlay_status);
@@ -111,6 +134,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // ── Button style ──────────────────────────────────────────────────────────
+
     private void initButtonStyleSection() {
         cardCircle = findViewById(R.id.card_circle);
         cardSemiCircle = findViewById(R.id.card_semicircle);
@@ -137,6 +162,8 @@ public class MainActivity extends AppCompatActivity {
             cardSemiCircle.setCardElevation(selected);
         }
     }
+
+    // ── Gesture actions ───────────────────────────────────────────────────────
 
     private void initGestureSection() {
         spinnerSingle = findViewById(R.id.spinner_single);
@@ -194,6 +221,81 @@ public class MainActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
     }
+
+    // ── TTS voice ─────────────────────────────────────────────────────────────
+
+    private void initTtsSection() {
+        spinnerTtsVoice = findViewById(R.id.spinner_tts_voice);
+
+        // Show placeholder until TTS initialises
+        ArrayAdapter<String> placeholder = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                new String[]{getString(R.string.tts_voice_default)});
+        placeholder.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerTtsVoice.setAdapter(placeholder);
+
+        mainTts = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                populateTtsVoices();
+            }
+        });
+    }
+
+    private void populateTtsVoices() {
+        Set<Voice> voices = mainTts.getVoices();
+        if (voices == null || voices.isEmpty()) return;
+
+        String lang = Locale.getDefault().getLanguage();
+        List<Voice> filtered = new ArrayList<>();
+        for (Voice v : voices) {
+            if (!v.isNetworkConnectionRequired()
+                    && v.getLocale().getLanguage().equals(lang)) {
+                filtered.add(v);
+            }
+        }
+        if (filtered.isEmpty()) {
+            for (Voice v : voices) {
+                if (!v.isNetworkConnectionRequired()) filtered.add(v);
+            }
+        }
+        filtered.sort((a, b) -> a.getName().compareTo(b.getName()));
+
+        ttsVoiceKeys = new String[filtered.size() + 1];
+        String[] labels = new String[filtered.size() + 1];
+        ttsVoiceKeys[0] = "";
+        labels[0] = getString(R.string.tts_voice_default);
+        for (int i = 0; i < filtered.size(); i++) {
+            ttsVoiceKeys[i + 1] = filtered.get(i).getName();
+            labels[i + 1] = filtered.get(i).getName();
+        }
+
+        String savedKey = settings.getTtsVoice();
+        int savedPos = 0;
+        for (int i = 0; i < ttsVoiceKeys.length; i++) {
+            if (ttsVoiceKeys[i].equals(savedKey)) { savedPos = i; break; }
+        }
+        final int selectionPos = savedPos;
+
+        runOnUiThread(() -> {
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_item, labels);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerTtsVoice.setAdapter(adapter);
+            spinnerTtsVoice.setSelection(selectionPos);
+            spinnerTtsVoice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                boolean initializing = true;
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    if (initializing) { initializing = false; return; }
+                    settings.setTtsVoice(ttsVoiceKeys[position]);
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+        });
+    }
+
+    // ── Service toggle ────────────────────────────────────────────────────────
 
     private void initServiceToggle() {
         if (switchService == null) {

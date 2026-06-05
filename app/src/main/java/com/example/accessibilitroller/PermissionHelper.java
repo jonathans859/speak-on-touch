@@ -1,13 +1,12 @@
 package com.example.accessibilitroller;
 
-import android.accessibilityservice.AccessibilityServiceInfo;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
-import android.view.accessibility.AccessibilityManager;
+import android.text.TextUtils;
 import androidx.core.content.ContextCompat;
-import java.util.List;
 
 public class PermissionHelper {
 
@@ -16,15 +15,16 @@ public class PermissionHelper {
     }
 
     public static boolean isAccessibilityServiceEnabled(Context context) {
-        AccessibilityManager am = (AccessibilityManager)
-                context.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        if (am == null) return false;
-        List<AccessibilityServiceInfo> enabled =
-                am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
-        String target = context.getPackageName() + "/"
-                + AccessibilitrollerService.class.getName();
-        for (AccessibilityServiceInfo info : enabled) {
-            if (target.equals(info.getId())) return true;
+        String flat = Settings.Secure.getString(
+                context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        if (flat == null || flat.isEmpty()) return false;
+        ComponentName target = new ComponentName(
+                context.getPackageName(), AccessibilitrollerService.class.getName());
+        TextUtils.SimpleStringSplitter splitter = new TextUtils.SimpleStringSplitter(':');
+        splitter.setString(flat);
+        while (splitter.hasNext()) {
+            ComponentName cn = ComponentName.unflattenFromString(splitter.next());
+            if (cn != null && cn.equals(target)) return true;
         }
         return false;
     }

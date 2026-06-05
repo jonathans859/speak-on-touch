@@ -12,6 +12,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.util.Locale;
+import java.util.Set;
 
 public class AccessibilitrollerService extends AccessibilityService {
 
@@ -36,14 +37,7 @@ public class AccessibilitrollerService extends AccessibilityService {
 
         tts = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
-                int result = tts.setLanguage(Locale.getDefault());
-                if (result != TextToSpeech.LANG_MISSING_DATA
-                        && result != TextToSpeech.LANG_NOT_SUPPORTED) {
-                    ttsReady = true;
-                } else {
-                    tts.setLanguage(Locale.ENGLISH);
-                    ttsReady = true;
-                }
+                applyVoiceOrLocale();
             } else {
                 Log.e(TAG, "TTS init failed with status: " + status);
                 tts = null;
@@ -75,6 +69,30 @@ public class AccessibilitrollerService extends AccessibilityService {
         }
         ttsReady = false;
         super.onDestroy();
+    }
+
+    // ── TTS voice setup ───────────────────────────────────────────────────────
+
+    private void applyVoiceOrLocale() {
+        String savedName = SettingsManager.getInstance(this).getTtsVoice();
+        if (!savedName.isEmpty()) {
+            Set<android.speech.tts.Voice> voices = tts.getVoices();
+            if (voices != null) {
+                for (android.speech.tts.Voice v : voices) {
+                    if (v.getName().equals(savedName)) {
+                        tts.setVoice(v);
+                        ttsReady = true;
+                        return;
+                    }
+                }
+            }
+        }
+        int result = tts.setLanguage(Locale.getDefault());
+        if (result == TextToSpeech.LANG_MISSING_DATA
+                || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            tts.setLanguage(Locale.ENGLISH);
+        }
+        ttsReady = true;
     }
 
     // ── speakNode ─────────────────────────────────────────────────────────────
