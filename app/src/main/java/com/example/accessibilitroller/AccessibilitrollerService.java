@@ -20,12 +20,14 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public class AccessibilitrollerService extends AccessibilityService {
 
     private static final String TAG = "AccessibilitrollerSvc";
+    private static final int SNAP_RADIUS_DP = 28;
 
     private static AccessibilitrollerService instance;
 
@@ -147,24 +149,77 @@ public class AccessibilitrollerService extends AccessibilityService {
         boolean readBg = SettingsManager.getInstance(this).getReadBackgrounds();
         AccessibilityNodeInfo target = null;
 
-        // Search all windows (status bar, system UI, active app) front-to-back
         List<AccessibilityWindowInfo> windows = getWindows();
         if (windows != null) {
-            for (AccessibilityWindowInfo window : windows) {
-                AccessibilityNodeInfo root = window.getRoot();
+            // Phase 1: exact hit-test across all windows (front-to-back)
+            for (AccessibilityWindowInfo w : windows) {
+                AccessibilityNodeInfo root = w.getRoot();
                 if (root == null) continue;
                 target = readBg ? findDeepestNodeAt(root, x, y) : findMeaningfulNodeAt(root, x, y);
                 if (target != null) break;
             }
+            // Phase 2: snap to nearest node in system windows (status bar, nav bar)
+            if (target == null) {
+                int snapPx = dpToPx(SNAP_RADIUS_DP);
+                for (AccessibilityWindowInfo w : windows) {
+                    if (w.getType() != AccessibilityWindowInfo.TYPE_SYSTEM) continue;
+                    AccessibilityNodeInfo root = w.getRoot();
+                    if (root == null) continue;
+                    target = findNearestMeaningfulNode(root, x, y, snapPx);
+                    if (target != null) break;
+                }
+            }
         }
+        // Fallback when getWindows() returns nothing
         if (target == null) {
-            // Fallback for when getWindows() returns nothing
             AccessibilityNodeInfo root = getRootInActiveWindow();
             if (root != null) {
                 target = readBg ? findDeepestNodeAt(root, x, y) : findMeaningfulNodeAt(root, x, y);
             }
         }
         if (target != null) speakNode(target);
+    }
+
+    private AccessibilityNodeInfo findNearestMeaningfulNode(AccessibilityNodeInfo root,
+            int x, int y, int radiusPx) {
+        List<AccessibilityNodeInfo> candidates = new ArrayList<>();
+        gatherMeaningfulNodes(root, candidates);
+
+        AccessibilityNodeInfo best = null;
+        float bestDist = Float.MAX_VALUE;
+        Rect r = new Rect();
+        for (AccessibilityNodeInfo node : candidates) {
+            node.getBoundsInScreen(r);
+            if (r.isEmpty()) continue;
+            float dist = distToRect(x, y, r);
+            if (dist <= radiusPx && dist < bestDist) {
+                bestDist = dist;
+                best = node;
+            }
+        }
+        for (AccessibilityNodeInfo node : candidates) {
+            if (node != best) node.recycle();
+        }
+        return best;
+    }
+
+    private void gatherMeaningfulNodes(AccessibilityNodeInfo node, List<AccessibilityNodeInfo> out) {
+        if (node == null) return;
+        for (int i = 0; i < node.getChildCount(); i++) {
+            gatherMeaningfulNodes(node.getChild(i), out);
+        }
+        if (hasMeaningfulContent(node)) {
+            out.add(node);
+        } else {
+            node.recycle();
+        }
+    }
+
+    private float distToRect(int x, int y, Rect r) {
+        if (r.contains(x, y)) return 0f;
+        float dx = Math.max(0f, (float) Math.max(r.left - x, x - r.right));
+        float dy = Math.max(0f, (float) Math.max(r.top - y, y - r.bottom));
+        return (float) Math.sqrt(dx * dx + dy * dy);
     }
 
     private AccessibilityNodeInfo findMeaningfulNodeAt(AccessibilityNodeInfo node, int x, int y) {
