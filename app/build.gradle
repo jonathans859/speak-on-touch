@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.accessibilitroller'
+    namespace 'com.jonathan859.accessibilitroller'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.example.accessibilitroller"
+        applicationId "com.jonathan859.accessibilitroller"
         minSdk 26
         targetSdk 35
         versionCode 1

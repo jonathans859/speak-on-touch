@@ -1,4 +1,4 @@
-package com.example.accessibilitroller;
+package com.jonathan859.accessibilitroller;
 
 import android.accessibilityservice.AccessibilityService;
 import android.content.BroadcastReceiver;
@@ -40,7 +40,7 @@ public class AccessibilitrollerService extends AccessibilityService {
     }
 
     // FloatingButtonService sends this with EXTRA_X / EXTRA_Y to request a speak
-    public static final String ACTION_SPEAK_AT = "com.example.accessibilitroller.SPEAK_AT";
+    public static final String ACTION_SPEAK_AT = "com.jonathan859.accessibilitroller.SPEAK_AT";
     public static final String EXTRA_X = "x";
     public static final String EXTRA_Y = "y";
 

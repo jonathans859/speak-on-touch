@@ -1,4 +1,4 @@
-package com.example.accessibilitroller;
+package com.jonathan859.accessibilitroller;
 
 import android.content.Context;
 import android.graphics.Canvas;

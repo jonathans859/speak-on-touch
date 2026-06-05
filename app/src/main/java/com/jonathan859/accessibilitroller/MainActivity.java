@@ -1,4 +1,4 @@
-package com.example.accessibilitroller;
+package com.jonathan859.accessibilitroller;
 
 import android.Manifest;
 import android.content.Intent;
