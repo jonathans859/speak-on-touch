@@ -2,6 +2,7 @@ package com.example.accessibilitroller;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 
 public class SettingsManager {
     private static SettingsManager instance;
@@ -107,5 +108,13 @@ public class SettingsManager {
 
     public void setHighlightEnabled(boolean value) {
         prefs.edit().putBoolean(KEY_HIGHLIGHT_ENABLED, value).apply();
+    }
+
+    public void registerListener(OnSharedPreferenceChangeListener listener) {
+        prefs.registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    public void unregisterListener(OnSharedPreferenceChangeListener listener) {
+        prefs.unregisterOnSharedPreferenceChangeListener(listener);
     }
 }

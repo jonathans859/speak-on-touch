@@ -63,6 +63,13 @@ public class FloatingButtonService extends Service {
     private View speakOverlay;
     private long lastSpeakTime = 0;
 
+    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener prefListener =
+            (prefs, key) -> {
+                if (SettingsManager.KEY_BUTTON_COLOR.equals(key)) {
+                    applyButtonColor(settings.getButtonColor());
+                }
+            };
+
     public static boolean isRunning() {
         return running;
     }
@@ -73,6 +80,7 @@ public class FloatingButtonService extends Service {
         running = true;
         settings = SettingsManager.getInstance(this);
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        settings.registerListener(prefListener);
     }
 
     @Override
@@ -86,6 +94,7 @@ public class FloatingButtonService extends Service {
     @Override
     public void onDestroy() {
         running = false;
+        settings.unregisterListener(prefListener);
         cancelLongPress();
         cancelResolution();
         removeSpeakOverlay();
@@ -192,6 +201,18 @@ public class FloatingButtonService extends Service {
         buttonView.setContentDescription(speakModeActive
                 ? getString(R.string.button_desc_active)
                 : getString(R.string.button_desc_inactive));
+    }
+
+    private void applyButtonColor(int color) {
+        if (buttonView == null) return;
+        if (buttonView instanceof SemiCircleButtonView) {
+            ((SemiCircleButtonView) buttonView).setColor(color);
+        } else {
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.OVAL);
+            bg.setColor(color);
+            buttonView.setBackground(bg);
+        }
     }
 
     private int dpToPx(float dp) {
