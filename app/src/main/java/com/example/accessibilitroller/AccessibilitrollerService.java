@@ -25,6 +25,16 @@ public class AccessibilitrollerService extends AccessibilityService {
 
     private static final String TAG = "AccessibilitrollerSvc";
 
+    private static AccessibilitrollerService instance;
+
+    static boolean isAvailable() { return instance != null; }
+
+    static void addOverlayView(View v, WindowManager.LayoutParams lp) {
+        if (instance == null) return;
+        lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
+        instance.windowManager.addView(v, lp);
+    }
+
     // FloatingButtonService sends this with EXTRA_X / EXTRA_Y to request a speak
     public static final String ACTION_SPEAK_AT = "com.example.accessibilitroller.SPEAK_AT";
     public static final String EXTRA_X = "x";
@@ -64,6 +74,7 @@ public class AccessibilitrollerService extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
+        instance = this;
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         SettingsManager.getInstance(this).registerListener(engineListener);
         initTts();
@@ -79,6 +90,7 @@ public class AccessibilitrollerService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        instance = null;
         SettingsManager.getInstance(this).unregisterListener(engineListener);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(speakReceiver);
         highlightHandler.removeCallbacksAndMessages(null);
@@ -215,7 +227,7 @@ public class AccessibilitrollerService extends AccessibilityService {
             highlightView.setBackground(border);
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                     bounds.width(), bounds.height(),
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                             | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                             | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,

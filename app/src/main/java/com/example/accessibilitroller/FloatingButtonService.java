@@ -39,6 +39,7 @@ public class FloatingButtonService extends Service {
     private static boolean running = false;
 
     private WindowManager windowManager;
+    private int overlayWindowType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
     private View buttonView;
     private WindowManager.LayoutParams params;
     private SettingsManager settings;
@@ -101,7 +102,7 @@ public class FloatingButtonService extends Service {
         cancelResolution();
         removeSpeakOverlay();
         if (buttonView != null && buttonView.isAttachedToWindow()) {
-            windowManager.removeView(buttonView);
+            wRemoveView(buttonView);
             buttonView = null;
         }
         super.onDestroy();
@@ -133,6 +134,30 @@ public class FloatingButtonService extends Service {
                 .setContentIntent(pi)
                 .setOngoing(true)
                 .build();
+    }
+
+    // ── Window manager helpers ────────────────────────────────────────────────
+
+    private void wAddView(View v, WindowManager.LayoutParams lp) {
+        if (AccessibilitrollerService.isAvailable()) {
+            AccessibilitrollerService.addOverlayView(v, lp);
+            overlayWindowType = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
+        } else {
+            lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+            overlayWindowType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+            windowManager.addView(v, lp);
+        }
+    }
+
+    private void wRemoveView(View v) {
+        if (v != null && v.isAttachedToWindow()) {
+            windowManager.removeView(v);
+        }
+    }
+
+    private void wUpdateViewLayout(View v, WindowManager.LayoutParams lp) {
+        lp.type = overlayWindowType;
+        windowManager.updateViewLayout(v, lp);
     }
 
     // ── Overlay setup ─────────────────────────────────────────────────────────
@@ -195,7 +220,7 @@ public class FloatingButtonService extends Service {
             else executeGestureAction(SettingsManager.KEY_GESTURE_SINGLE);
         });
         buttonView.setOnTouchListener(this::onButtonTouch);
-        windowManager.addView(buttonView, params);
+        wAddView(buttonView, params);
     }
 
     private void updateButtonContentDescription() {
@@ -208,7 +233,7 @@ public class FloatingButtonService extends Service {
     private void updateButtonStyle() {
         if (speakModeActive) deactivateSpeakMode();
         if (buttonView != null && buttonView.isAttachedToWindow()) {
-            windowManager.removeView(buttonView);
+            wRemoveView(buttonView);
             buttonView = null;
         }
         setupOverlay();
@@ -254,12 +279,12 @@ public class FloatingButtonService extends Service {
                 PixelFormat.TRANSPARENT);
         speakOverlay = new View(this);
         speakOverlay.setOnTouchListener(this::onSpeakTouch);
-        windowManager.addView(speakOverlay, overlayParams);
+        wAddView(speakOverlay, overlayParams);
 
         // Re-add button on top so its gestures still work
         if (buttonView != null && buttonView.isAttachedToWindow()) {
-            windowManager.removeView(buttonView);
-            windowManager.addView(buttonView, params);
+            wRemoveView(buttonView);
+            wAddView(buttonView, params);
         }
     }
 
@@ -272,9 +297,7 @@ public class FloatingButtonService extends Service {
     }
 
     private void removeSpeakOverlay() {
-        if (speakOverlay != null && speakOverlay.isAttachedToWindow()) {
-            windowManager.removeView(speakOverlay);
-        }
+        wRemoveView(speakOverlay);
         speakOverlay = null;
     }
 
@@ -331,7 +354,7 @@ public class FloatingButtonService extends Service {
             case MotionEvent.ACTION_MOVE:
                 params.x = (int) (event.getRawX() - buttonView.getWidth() / 2f);
                 params.y = (int) (event.getRawY() - buttonView.getHeight() / 2f);
-                windowManager.updateViewLayout(buttonView, params);
+                wUpdateViewLayout(buttonView, params);
                 return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
@@ -350,7 +373,7 @@ public class FloatingButtonService extends Service {
         display.getSize(size);
         boolean goRight = (params.x + buttonView.getWidth() / 2) >= size.x / 2;
         params.x = goRight ? size.x - buttonView.getWidth() : 0;
-        windowManager.updateViewLayout(buttonView, params);
+        wUpdateViewLayout(buttonView, params);
         if (buttonView instanceof SemiCircleButtonView) {
             ((SemiCircleButtonView) buttonView).setSnapLeft(!goRight);
         }
