@@ -198,6 +198,20 @@
             </androidx.cardview.widget.CardView>
         </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_color_label"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/color_swatch_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp" />
+
         <!-- SECTION 3: Gesture Actions -->
         <TextView
             android:layout_width="wrap_content"
@@ -306,6 +320,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_speak_auto_disable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/speak_auto_disable_label"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
 
         <!-- SECTION 5: Service Toggle -->
         <com.google.android.material.switchmaterial.SwitchMaterial

@@ -2,6 +2,8 @@ package com.example.accessibilitroller;
 
 import android.Manifest;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,6 +14,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -44,8 +47,15 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spinnerDoubleHold;
 
     private Spinner spinnerTtsVoice;
+    private SwitchMaterial switchSpeakAutoDisable;
     private TextToSpeech mainTts;
     private String[] ttsVoiceKeys;
+
+    private static final int[] BUTTON_COLORS = {
+        0xFF6200EE, 0xFF1976D2, 0xFF388E3C,
+        0xFFF57C00, 0xFFD32F2F, 0xFF00796B
+    };
+    private View[] colorSwatches;
 
     private SwitchMaterial switchService;
 
@@ -64,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
         initPermissionSection();
         initButtonStyleSection();
+        initColorSection();
         initGestureSection();
         initTtsSection();
         initServiceToggle();
@@ -163,6 +174,48 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // ── Button colour ─────────────────────────────────────────────────────────
+
+    private void initColorSection() {
+        LinearLayout row = findViewById(R.id.color_swatch_row);
+        row.removeAllViews();
+        int sizePx  = dpToPx(36);
+        int marginPx = dpToPx(10);
+        colorSwatches = new View[BUTTON_COLORS.length];
+        for (int i = 0; i < BUTTON_COLORS.length; i++) {
+            View swatch = new View(this);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(sizePx, sizePx);
+            lp.setMargins(0, 0, marginPx, 0);
+            swatch.setLayoutParams(lp);
+            colorSwatches[i] = swatch;
+            final int color = BUTTON_COLORS[i];
+            swatch.setOnClickListener(v -> selectColor(color));
+            row.addView(swatch);
+        }
+        refreshColorSwatches();
+    }
+
+    private void selectColor(int color) {
+        settings.setButtonColor(color);
+        refreshColorSwatches();
+    }
+
+    private void refreshColorSwatches() {
+        int current = settings.getButtonColor();
+        for (int i = 0; i < BUTTON_COLORS.length; i++) {
+            int c = BUTTON_COLORS[i];
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.OVAL);
+            bg.setColor(c);
+            if (c == current) bg.setStroke(dpToPx(3), Color.WHITE);
+            colorSwatches[i].setBackground(bg);
+        }
+    }
+
+    private int dpToPx(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
     // ── Gesture actions ───────────────────────────────────────────────────────
 
     private void initGestureSection() {
@@ -222,10 +275,15 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ── TTS voice ─────────────────────────────────────────────────────────────
+    // ── TTS / speak settings ──────────────────────────────────────────────────
 
     private void initTtsSection() {
         spinnerTtsVoice = findViewById(R.id.spinner_tts_voice);
+
+        switchSpeakAutoDisable = findViewById(R.id.switch_speak_auto_disable);
+        switchSpeakAutoDisable.setChecked(settings.getSpeakAutoDisable());
+        switchSpeakAutoDisable.setOnCheckedChangeListener((btn, checked) ->
+                settings.setSpeakAutoDisable(checked));
 
         // Show placeholder until TTS initialises
         ArrayAdapter<String> placeholder = new ArrayAdapter<>(this,

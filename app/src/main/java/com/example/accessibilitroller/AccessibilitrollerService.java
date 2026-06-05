@@ -25,13 +25,22 @@ public class AccessibilitrollerService extends AccessibilityService {
 
     private TextToSpeech tts;
     private boolean ttsReady = false;
+    private String lastSpokenText = null;
+    private long lastSpeakBroadcastTime = 0;
+    private static final long SESSION_RESET_MS = 3000;
 
     private final BroadcastReceiver speakReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int x = intent.getIntExtra(EXTRA_X, -1);
             int y = intent.getIntExtra(EXTRA_Y, -1);
-            if (x >= 0 && y >= 0) speakNodeAtCoordinates(x, y);
+            if (x < 0 || y < 0) return;
+            long now = System.currentTimeMillis();
+            if (now - lastSpeakBroadcastTime > SESSION_RESET_MS) {
+                lastSpokenText = null; // new speak session — allow re-reading
+            }
+            lastSpeakBroadcastTime = now;
+            speakNodeAtCoordinates(x, y);
         }
     };
 
@@ -117,10 +126,13 @@ public class AccessibilitrollerService extends AccessibilityService {
             int dot = className.lastIndexOf('.');
             text = dot >= 0 ? className.substring(dot + 1) : className;
         }
-        if (tts != null && ttsReady && text.length() > 0) {
-            tts.speak(text.toString(), TextToSpeech.QUEUE_FLUSH, null, "accessibilitroller_utt");
-        }
+        String textStr = text.toString();
         node.recycle();
+        if (textStr.equals(lastSpokenText)) return; // already said this
+        lastSpokenText = textStr;
+        if (tts != null && ttsReady && !textStr.isEmpty()) {
+            tts.speak(textStr, TextToSpeech.QUEUE_FLUSH, null, "accessibilitroller_utt");
+        }
     }
 
     private AccessibilityNodeInfo findDeepestNodeAt(AccessibilityNodeInfo node, int x, int y) {

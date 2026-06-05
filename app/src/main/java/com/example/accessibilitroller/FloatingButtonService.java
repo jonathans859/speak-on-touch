@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.GradientDrawable;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Handler;
@@ -17,13 +18,15 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.Display;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.view.ContextThemeWrapper;
 import androidx.core.app.NotificationCompat;
+import androidx.core.view.AccessibilityDelegateCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class FloatingButtonService extends Service {
@@ -43,7 +46,6 @@ public class FloatingButtonService extends Service {
     private Runnable longPressRunnable;
     private Runnable resolutionRunnable;
 
-    // Gesture state machine
     private static final int GESTURE_IDLE           = 0;
     private static final int GESTURE_FIRST_DOWN     = 1;
     private static final int GESTURE_FIRST_WAITING  = 2;
@@ -56,7 +58,6 @@ public class FloatingButtonService extends Service {
     private float dragStartX, dragStartY;
     private int dragStartParamX, dragStartParamY;
 
-    // Speak mode
     private boolean speakModeActive = false;
     private View speakOverlay;
     private long lastSpeakTime = 0;
@@ -130,9 +131,10 @@ public class FloatingButtonService extends Service {
         Point size = new Point();
         display.getSize(size);
 
+        int buttonPx = dpToPx(56);
         params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                buttonPx,
+                buttonPx,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
@@ -140,26 +142,65 @@ public class FloatingButtonService extends Service {
         params.x = (int) (settings.getButtonPosX() * size.x);
         params.y = (int) (settings.getButtonPosY() * size.y);
 
+        int color = settings.getButtonColor();
         Context themed = new ContextThemeWrapper(this, R.style.Theme_Accessibilitroller);
         String style = settings.getButtonStyle();
+
         if (SettingsManager.STYLE_SEMICIRCLE.equals(style)) {
             SemiCircleButtonView semi = new SemiCircleButtonView(themed);
+            semi.setColor(color);
             semi.setSnapLeft(params.x < size.x / 2);
             buttonView = semi;
+            // Semicircle is narrower — set width to 28dp
+            params.width = dpToPx(28);
         } else {
-            buttonView = LayoutInflater.from(themed).inflate(R.layout.overlay_button, null);
+            View btn = new View(themed);
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.OVAL);
+            bg.setColor(color);
+            btn.setBackground(bg);
+            btn.setElevation(dpToPx(8));
+            buttonView = btn;
         }
 
+        // TalkBack accessibility
+        buttonView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        buttonView.setClickable(true);
+        ViewCompat.setAccessibilityDelegate(buttonView, new AccessibilityDelegateCompat() {
+            @Override
+            public void onInitializeAccessibilityNodeInfo(View host,
+                    AccessibilityNodeInfoCompat info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setClassName(android.widget.Button.class.getName());
+                info.setClickable(true);
+            }
+        });
+        updateButtonContentDescription();
+
+        // Click listener for TalkBack activation (double-tap)
+        buttonView.setOnClickListener(v -> {
+            if (speakModeActive) deactivateSpeakMode();
+            else executeGestureAction(SettingsManager.KEY_GESTURE_SINGLE);
+        });
         buttonView.setOnTouchListener(this::onButtonTouch);
         windowManager.addView(buttonView, params);
+    }
+
+    private void updateButtonContentDescription() {
+        if (buttonView == null) return;
+        buttonView.setContentDescription(speakModeActive
+                ? getString(R.string.button_desc_active)
+                : getString(R.string.button_desc_inactive));
+    }
+
+    private int dpToPx(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     // ── Touch dispatcher ──────────────────────────────────────────────────────
 
     private boolean onButtonTouch(View v, MotionEvent event) {
-        if (dragMode) {
-            return handleDrag(event);
-        }
+        if (dragMode) return handleDrag(event);
         return handleGesture(event);
     }
 
@@ -169,8 +210,8 @@ public class FloatingButtonService extends Service {
         speakModeActive = true;
         vibrate(50);
         if (buttonView != null) buttonView.setAlpha(0.6f);
+        updateButtonContentDescription();
 
-        // Full-screen transparent window to catch all finger movement
         WindowManager.LayoutParams overlayParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -182,7 +223,7 @@ public class FloatingButtonService extends Service {
         speakOverlay.setOnTouchListener(this::onSpeakTouch);
         windowManager.addView(speakOverlay, overlayParams);
 
-        // Re-add button on top of the overlay so its own gestures still work
+        // Re-add button on top so its gestures still work
         if (buttonView != null && buttonView.isAttachedToWindow()) {
             windowManager.removeView(buttonView);
             windowManager.addView(buttonView, params);
@@ -192,6 +233,7 @@ public class FloatingButtonService extends Service {
     private void deactivateSpeakMode() {
         speakModeActive = false;
         if (buttonView != null) buttonView.setAlpha(1.0f);
+        updateButtonContentDescription();
         removeSpeakOverlay();
         vibrate(30);
     }
@@ -207,10 +249,13 @@ public class FloatingButtonService extends Service {
         int action = event.getAction();
         if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
             long now = System.currentTimeMillis();
-            // Speak immediately on touch-down; debounce swipe movement
             if (action == MotionEvent.ACTION_DOWN || now - lastSpeakTime >= SPEAK_DEBOUNCE_MS) {
                 lastSpeakTime = now;
                 broadcastSpeak((int) event.getRawX(), (int) event.getRawY());
+            }
+        } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            if (settings.getSpeakAutoDisable()) {
+                deactivateSpeakMode();
             }
         }
         return true;
@@ -270,11 +315,9 @@ public class FloatingButtonService extends Service {
         Display display = windowManager.getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
-        int mid = size.x / 2;
-        boolean goRight = (params.x + buttonView.getWidth() / 2) >= mid;
+        boolean goRight = (params.x + buttonView.getWidth() / 2) >= size.x / 2;
         params.x = goRight ? size.x - buttonView.getWidth() : 0;
         windowManager.updateViewLayout(buttonView, params);
-
         if (buttonView instanceof SemiCircleButtonView) {
             ((SemiCircleButtonView) buttonView).setSnapLeft(!goRight);
         }
@@ -305,13 +348,9 @@ public class FloatingButtonService extends Service {
 
     private boolean handleGesture(MotionEvent event) {
         switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                onGestureDown();
-                return true;
+            case MotionEvent.ACTION_DOWN:  onGestureDown(); return true;
             case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                onGestureUp();
-                return true;
+            case MotionEvent.ACTION_CANCEL: onGestureUp(); return true;
         }
         return false;
     }
@@ -327,7 +366,6 @@ public class FloatingButtonService extends Service {
                 executeGestureAction(SettingsManager.KEY_GESTURE_HOLD);
             };
             gestureHandler.postDelayed(longPressRunnable, ViewConfiguration.getLongPressTimeout());
-
         } else if (gestureState == GESTURE_FIRST_WAITING) {
             cancelResolution();
             gestureState = GESTURE_SECOND_DOWN;
@@ -354,7 +392,6 @@ public class FloatingButtonService extends Service {
             } else {
                 gestureState = GESTURE_IDLE;
             }
-
         } else if (gestureState == GESTURE_SECOND_DOWN) {
             cancelLongPress();
             if (!longPressFired) {
@@ -383,12 +420,10 @@ public class FloatingButtonService extends Service {
     // ── Action dispatch ───────────────────────────────────────────────────────
 
     private void executeGestureAction(String gestureKey) {
-        // Any button press while speak mode is active toggles it off
         if (speakModeActive) {
             deactivateSpeakMode();
             return;
         }
-
         String action = settings.getGestureAction(gestureKey);
         switch (action) {
             case SettingsManager.ACTION_SPEAK_ON_TOUCH:
@@ -397,7 +432,6 @@ public class FloatingButtonService extends Service {
             case SettingsManager.ACTION_ENABLE_DRAG:
                 enterDragMode();
                 break;
-            case SettingsManager.ACTION_NONE:
             default:
                 break;
         }

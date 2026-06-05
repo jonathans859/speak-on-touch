@@ -35,6 +35,11 @@ public class SemiCircleButtonView extends View {
         paint.setStyle(Paint.Style.FILL);
     }
 
+    public void setColor(int color) {
+        paint.setColor(color);
+        invalidate();
+    }
+
     public void setSnapLeft(boolean left) {
         snapLeft = left;
         invalidate();

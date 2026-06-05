@@ -12,9 +12,13 @@ public class SettingsManager {
     public static final String KEY_GESTURE_DOUBLE      = "gesture_double";
     public static final String KEY_GESTURE_HOLD        = "gesture_hold";
     public static final String KEY_GESTURE_DOUBLE_HOLD = "gesture_double_hold";
-    public static final String KEY_BUTTON_POS_X        = "button_pos_x";
-    public static final String KEY_BUTTON_POS_Y        = "button_pos_y";
-    public static final String KEY_TTS_VOICE           = "tts_voice";
+    public static final String KEY_BUTTON_POS_X         = "button_pos_x";
+    public static final String KEY_BUTTON_POS_Y         = "button_pos_y";
+    public static final String KEY_TTS_VOICE            = "tts_voice";
+    public static final String KEY_BUTTON_COLOR         = "button_color";
+    public static final String KEY_SPEAK_AUTO_DISABLE   = "speak_auto_disable";
+
+    public static final int DEFAULT_BUTTON_COLOR = 0xFF6200EE;
 
     public static final String ACTION_SPEAK_ON_TOUCH = "speak_on_touch";
     public static final String ACTION_ENABLE_DRAG    = "enable_drag";
@@ -78,5 +82,21 @@ public class SettingsManager {
 
     public void setTtsVoice(String voiceName) {
         prefs.edit().putString(KEY_TTS_VOICE, voiceName).apply();
+    }
+
+    public int getButtonColor() {
+        return prefs.getInt(KEY_BUTTON_COLOR, DEFAULT_BUTTON_COLOR);
+    }
+
+    public void setButtonColor(int color) {
+        prefs.edit().putInt(KEY_BUTTON_COLOR, color).apply();
+    }
+
+    public boolean getSpeakAutoDisable() {
+        return prefs.getBoolean(KEY_SPEAK_AUTO_DISABLE, false);
+    }
+
+    public void setSpeakAutoDisable(boolean value) {
+        prefs.edit().putBoolean(KEY_SPEAK_AUTO_DISABLE, value).apply();
     }
 }
