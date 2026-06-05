@@ -327,6 +327,13 @@
             android:layout_height="wrap_content"
             android:text="@string/speak_auto_disable_label"
             android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_highlight_enabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/highlight_enabled_label"
             android:layout_marginBottom="16dp" />
 
         <!-- SECTION 5: Service Toggle -->

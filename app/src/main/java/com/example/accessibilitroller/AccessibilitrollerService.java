@@ -5,9 +5,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -22,6 +29,11 @@ public class AccessibilitrollerService extends AccessibilityService {
     public static final String ACTION_SPEAK_AT = "com.example.accessibilitroller.SPEAK_AT";
     public static final String EXTRA_X = "x";
     public static final String EXTRA_Y = "y";
+
+    private WindowManager windowManager;
+    private View highlightView;
+    private final Handler highlightHandler = new Handler(Looper.getMainLooper());
+    private final Runnable hideHighlight = this::removeHighlight;
 
     private TextToSpeech tts;
     private boolean ttsReady = false;
@@ -47,6 +59,7 @@ public class AccessibilitrollerService extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
         tts = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
@@ -70,6 +83,8 @@ public class AccessibilitrollerService extends AccessibilityService {
     @Override
     public void onDestroy() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(speakReceiver);
+        highlightHandler.removeCallbacksAndMessages(null);
+        removeHighlight();
         if (tts != null) {
             tts.stop();
             tts.shutdown();
@@ -126,13 +141,68 @@ public class AccessibilitrollerService extends AccessibilityService {
             int dot = className.lastIndexOf('.');
             text = dot >= 0 ? className.substring(dot + 1) : className;
         }
-        String textStr = text.toString();
+        StringBuilder sb = new StringBuilder(text);
+        if (node.isCheckable()) {
+            sb.append(node.isChecked() ? ", checked" : ", unchecked");
+        }
+        String textStr = sb.toString();
+
+        Rect bounds = new Rect();
+        node.getBoundsInScreen(bounds);
         node.recycle();
-        if (textStr.equals(lastSpokenText)) return; // already said this
+
+        if (textStr.equals(lastSpokenText)) return;
         lastSpokenText = textStr;
         if (tts != null && ttsReady && !textStr.isEmpty()) {
             tts.speak(textStr, TextToSpeech.QUEUE_FLUSH, null, "accessibilitroller_utt");
         }
+        SettingsManager settings = SettingsManager.getInstance(this);
+        if (settings.getHighlightEnabled() && !bounds.isEmpty()) {
+            showHighlight(bounds);
+        }
+    }
+
+    private void showHighlight(Rect bounds) {
+        highlightHandler.removeCallbacks(hideHighlight);
+        if (highlightView != null && highlightView.isAttachedToWindow()) {
+            WindowManager.LayoutParams lp = (WindowManager.LayoutParams) highlightView.getLayoutParams();
+            lp.x = bounds.left;
+            lp.y = bounds.top;
+            lp.width = bounds.width();
+            lp.height = bounds.height();
+            windowManager.updateViewLayout(highlightView, lp);
+        } else {
+            GradientDrawable border = new GradientDrawable();
+            border.setShape(GradientDrawable.RECTANGLE);
+            border.setStroke(dpToPx(3), 0xFFFFEB3B);
+            border.setColor(0x33FFEB3B);
+            border.setCornerRadius(dpToPx(4));
+            highlightView = new View(this);
+            highlightView.setBackground(border);
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    bounds.width(), bounds.height(),
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                            | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                    PixelFormat.TRANSPARENT);
+            lp.gravity = Gravity.TOP | Gravity.LEFT;
+            lp.x = bounds.left;
+            lp.y = bounds.top;
+            windowManager.addView(highlightView, lp);
+        }
+        highlightHandler.postDelayed(hideHighlight, 1500);
+    }
+
+    private void removeHighlight() {
+        if (highlightView != null && highlightView.isAttachedToWindow()) {
+            windowManager.removeView(highlightView);
+        }
+        highlightView = null;
+    }
+
+    private int dpToPx(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private AccessibilityNodeInfo findDeepestNodeAt(AccessibilityNodeInfo node, int x, int y) {

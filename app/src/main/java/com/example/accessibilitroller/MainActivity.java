@@ -48,12 +48,17 @@ public class MainActivity extends AppCompatActivity {
 
     private Spinner spinnerTtsVoice;
     private SwitchMaterial switchSpeakAutoDisable;
+    private SwitchMaterial switchHighlight;
     private TextToSpeech mainTts;
     private String[] ttsVoiceKeys;
 
     private static final int[] BUTTON_COLORS = {
         0xFF6200EE, 0xFF1976D2, 0xFF388E3C,
         0xFFF57C00, 0xFFD32F2F, 0xFF00796B
+    };
+    private static final int[] COLOR_NAME_RES = {
+        R.string.color_purple, R.string.color_blue, R.string.color_green,
+        R.string.color_orange, R.string.color_red,  R.string.color_teal
     };
     private View[] colorSwatches;
 
@@ -187,6 +192,8 @@ public class MainActivity extends AppCompatActivity {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(sizePx, sizePx);
             lp.setMargins(0, 0, marginPx, 0);
             swatch.setLayoutParams(lp);
+            swatch.setContentDescription(getString(COLOR_NAME_RES[i]));
+            swatch.setFocusable(true);
             colorSwatches[i] = swatch;
             final int color = BUTTON_COLORS[i];
             swatch.setOnClickListener(v -> selectColor(color));
@@ -284,6 +291,11 @@ public class MainActivity extends AppCompatActivity {
         switchSpeakAutoDisable.setChecked(settings.getSpeakAutoDisable());
         switchSpeakAutoDisable.setOnCheckedChangeListener((btn, checked) ->
                 settings.setSpeakAutoDisable(checked));
+
+        switchHighlight = findViewById(R.id.switch_highlight_enabled);
+        switchHighlight.setChecked(settings.getHighlightEnabled());
+        switchHighlight.setOnCheckedChangeListener((btn, checked) ->
+                settings.setHighlightEnabled(checked));
 
         // Show placeholder until TTS initialises
         ArrayAdapter<String> placeholder = new ArrayAdapter<>(this,

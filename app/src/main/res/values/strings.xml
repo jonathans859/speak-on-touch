@@ -40,7 +40,14 @@
     <string name="tts_voice_default">System default</string>
 
     <string name="button_color_label">Button colour</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_green">Green</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_red">Red</string>
+    <string name="color_teal">Teal</string>
     <string name="speak_auto_disable_label">Disable speak mode when finger lifts</string>
+    <string name="highlight_enabled_label">Highlight focused element</string>
     <string name="button_desc_inactive">Accessibilitroller. Double-tap to start speak mode.</string>
     <string name="button_desc_active">Speak mode active. Double-tap to stop.</string>
 </resources>

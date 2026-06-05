@@ -17,6 +17,7 @@ public class SettingsManager {
     public static final String KEY_TTS_VOICE            = "tts_voice";
     public static final String KEY_BUTTON_COLOR         = "button_color";
     public static final String KEY_SPEAK_AUTO_DISABLE   = "speak_auto_disable";
+    public static final String KEY_HIGHLIGHT_ENABLED     = "highlight_enabled";
 
     public static final int DEFAULT_BUTTON_COLOR = 0xFF6200EE;
 
@@ -98,5 +99,13 @@ public class SettingsManager {
 
     public void setSpeakAutoDisable(boolean value) {
         prefs.edit().putBoolean(KEY_SPEAK_AUTO_DISABLE, value).apply();
+    }
+
+    public boolean getHighlightEnabled() {
+        return prefs.getBoolean(KEY_HIGHLIGHT_ENABLED, false);
+    }
+
+    public void setHighlightEnabled(boolean value) {
+        prefs.edit().putBoolean(KEY_HIGHLIGHT_ENABLED, value).apply();
     }
 }

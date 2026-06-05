@@ -34,6 +34,7 @@ public class FloatingButtonService extends Service {
     private static final String CHANNEL_ID = "accessibilitroller_channel";
     private static final int NOTIFICATION_ID = 1001;
     private static final long SPEAK_DEBOUNCE_MS = 350;
+    private static final long SINGLE_PRESS_TIMEOUT_MS = 200;
 
     private static boolean running = false;
 
@@ -208,7 +209,7 @@ public class FloatingButtonService extends Service {
 
     private void activateSpeakMode() {
         speakModeActive = true;
-        vibrate(50);
+        vibrate(20, 80);
         if (buttonView != null) buttonView.setAlpha(0.6f);
         updateButtonContentDescription();
 
@@ -235,7 +236,7 @@ public class FloatingButtonService extends Service {
         if (buttonView != null) buttonView.setAlpha(1.0f);
         updateButtonContentDescription();
         removeSpeakOverlay();
-        vibrate(30);
+        vibrate(15, 60);
     }
 
     private void removeSpeakOverlay() {
@@ -268,10 +269,10 @@ public class FloatingButtonService extends Service {
         LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
     }
 
-    private void vibrate(long ms) {
+    private void vibrate(long ms, int amplitude) {
         Vibrator vib = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         if (vib != null && vib.hasVibrator()) {
-            vib.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE));
+            vib.vibrate(VibrationEffect.createOneShot(ms, amplitude));
         }
     }
 
@@ -387,8 +388,7 @@ public class FloatingButtonService extends Service {
                     gestureState = GESTURE_IDLE;
                     executeGestureAction(SettingsManager.KEY_GESTURE_SINGLE);
                 };
-                gestureHandler.postDelayed(resolutionRunnable,
-                        ViewConfiguration.getDoubleTapTimeout());
+                gestureHandler.postDelayed(resolutionRunnable, SINGLE_PRESS_TIMEOUT_MS);
             } else {
                 gestureState = GESTURE_IDLE;
             }
