@@ -9,7 +9,7 @@ A pure-Java Android app (min SDK 26, target SDK 35) providing a floating overlay
 
 | Field | Value |
 |---|---|
-| Namespace | `com.example.accessibilitroller` |
+| Namespace / Application ID | `com.jonathan859.accessibilitroller` |
 | AGP | 8.6.0 |
 | Gradle | 8.7 (no wrapper JAR — CI uses `gradle/actions/setup-gradle@v4`) |
 | compileSdk / targetSdk | 35 |
@@ -166,6 +166,8 @@ The `TYPE_ACCESSIBILITY_OVERLAY` approach makes this unnecessary.
 
 ## File map
 
+Java sources live under `app/src/main/java/com/jonathan859/accessibilitroller/`.
+
 | File | Purpose |
 |---|---|
 | `app/src/main/java/…/MainActivity.java` | Settings UI: permissions, style cards, colour swatches, gesture spinners, TTS engine spinner, auto-disable/highlight/read-backgrounds switches, service toggle |
@@ -183,7 +185,7 @@ The `TYPE_ACCESSIBILITY_OVERLAY` approach makes this unnecessary.
 
 ---
 
-## Current status (as of commit `6c86c41`)
+## Current status (as of commit `6baaaed`)
 
 All known issues resolved. Features implemented and tested:
 
@@ -201,6 +203,10 @@ All known issues resolved. Features implemented and tested:
 12. **Softer vibration** — `VibrationEffect.createOneShot(20, 80)` / `(15, 60)`
 
 No pending tasks.
+
+Additional changes since previous status entry:
+- **Application ID renamed** to `com.jonathan859.accessibilitroller` (namespace, applicationId, all Java package declarations, ACTION_SPEAK_AT string, accessibility_service_config.xml, source tree moved from `com/example/` to `com/jonathan859/`)
+- **Debug keystore committed** to `keystore/debug.keystore` — eliminates 7-day CI cache eviction reinstall requirement
 
 ---
 
