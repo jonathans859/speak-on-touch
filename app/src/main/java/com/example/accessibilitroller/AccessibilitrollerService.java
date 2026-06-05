@@ -35,14 +35,6 @@ public class AccessibilitrollerService extends AccessibilityService {
     private final Handler highlightHandler = new Handler(Looper.getMainLooper());
     private final Runnable hideHighlight = this::removeHighlight;
 
-    private final Handler raiseHandler = new Handler(Looper.getMainLooper());
-    private final Runnable raiseBroadcast = new Runnable() {
-        @Override public void run() {
-            LocalBroadcastManager.getInstance(AccessibilitrollerService.this)
-                    .sendBroadcast(new Intent(FloatingButtonService.ACTION_RAISE_BUTTON));
-        }
-    };
-
     private final SharedPreferences.OnSharedPreferenceChangeListener engineListener =
             (prefs, key) -> {
                 if (SettingsManager.KEY_TTS_ENGINE.equals(key)) reinitTts();
@@ -80,12 +72,7 @@ public class AccessibilitrollerService extends AccessibilityService {
     }
 
     @Override
-    public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            raiseHandler.removeCallbacks(raiseBroadcast);
-            raiseHandler.postDelayed(raiseBroadcast, 300);
-        }
-    }
+    public void onAccessibilityEvent(AccessibilityEvent event) {}
 
     @Override
     public void onInterrupt() {}
@@ -94,7 +81,6 @@ public class AccessibilitrollerService extends AccessibilityService {
     public void onDestroy() {
         SettingsManager.getInstance(this).unregisterListener(engineListener);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(speakReceiver);
-        raiseHandler.removeCallbacksAndMessages(null);
         highlightHandler.removeCallbacksAndMessages(null);
         removeHighlight();
         shutdownTts();

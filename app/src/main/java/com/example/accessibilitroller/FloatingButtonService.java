@@ -31,8 +31,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class FloatingButtonService extends Service {
 
-    public static final String ACTION_RAISE_BUTTON = "com.example.accessibilitroller.RAISE_BUTTON";
-
     private static final String CHANNEL_ID = "accessibilitroller_channel";
     private static final int NOTIFICATION_ID = 1001;
     private static final long SPEAK_DEBOUNCE_MS = 350;
@@ -65,16 +63,6 @@ public class FloatingButtonService extends Service {
     private View speakOverlay;
     private long lastSpeakTime = 0;
 
-    private final android.content.BroadcastReceiver raiseReceiver = new android.content.BroadcastReceiver() {
-        @Override
-        public void onReceive(android.content.Context context, android.content.Intent intent) {
-            if (buttonView != null && buttonView.isAttachedToWindow() && !speakModeActive) {
-                windowManager.removeView(buttonView);
-                windowManager.addView(buttonView, params);
-            }
-        }
-    };
-
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener prefListener =
             (prefs, key) -> {
                 if (SettingsManager.KEY_BUTTON_COLOR.equals(key)) {
@@ -95,8 +83,6 @@ public class FloatingButtonService extends Service {
         settings = SettingsManager.getInstance(this);
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         settings.registerListener(prefListener);
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                raiseReceiver, new android.content.IntentFilter(ACTION_RAISE_BUTTON));
     }
 
     @Override
@@ -111,7 +97,6 @@ public class FloatingButtonService extends Service {
     public void onDestroy() {
         running = false;
         settings.unregisterListener(prefListener);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(raiseReceiver);
         cancelLongPress();
         cancelResolution();
         removeSpeakOverlay();
