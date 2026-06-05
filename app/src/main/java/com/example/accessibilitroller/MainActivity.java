@@ -8,7 +8,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.speech.tts.TextToSpeech;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -46,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spinnerTtsVoice;
     private SwitchMaterial switchSpeakAutoDisable;
     private SwitchMaterial switchHighlight;
-    private TextToSpeech mainTts;
     private String[] ttsVoiceKeys;
 
     private static final int[] BUTTON_COLORS = {
@@ -91,11 +91,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if (mainTts != null) {
-            mainTts.stop();
-            mainTts.shutdown();
-            mainTts = null;
-        }
         super.onDestroy();
     }
 
@@ -294,33 +289,23 @@ public class MainActivity extends AppCompatActivity {
         switchHighlight.setOnCheckedChangeListener((btn, checked) ->
                 settings.setHighlightEnabled(checked));
 
-        // Show placeholder until TTS initialises
-        ArrayAdapter<String> placeholder = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,
-                new String[]{getString(R.string.tts_voice_default)});
-        placeholder.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerTtsVoice.setAdapter(placeholder);
-
-        mainTts = new TextToSpeech(this, status -> {
-            if (status == TextToSpeech.SUCCESS) {
-                populateTtsEngines();
-            }
-        });
+        populateTtsEngines();
     }
 
     private void populateTtsEngines() {
-        List<TextToSpeech.EngineInfo> engines = mainTts.getEngines();
-        if (engines == null) engines = new ArrayList<>();
-        List<TextToSpeech.EngineInfo> sorted = new ArrayList<>(engines);
-        sorted.sort((a, b) -> a.label.compareTo(b.label));
+        PackageManager pm = getPackageManager();
+        Intent ttsIntent = new Intent("android.intent.action.TTS_SERVICE");
+        List<ResolveInfo> services = pm.queryIntentServices(ttsIntent, 0);
+        services.sort((a, b) ->
+                a.loadLabel(pm).toString().compareToIgnoreCase(b.loadLabel(pm).toString()));
 
-        ttsVoiceKeys = new String[sorted.size() + 1];
-        String[] labels = new String[sorted.size() + 1];
+        ttsVoiceKeys = new String[services.size() + 1];
+        String[] labels = new String[services.size() + 1];
         ttsVoiceKeys[0] = "";
         labels[0] = getString(R.string.tts_voice_default);
-        for (int i = 0; i < sorted.size(); i++) {
-            ttsVoiceKeys[i + 1] = sorted.get(i).name;
-            labels[i + 1] = sorted.get(i).label;
+        for (int i = 0; i < services.size(); i++) {
+            ttsVoiceKeys[i + 1] = services.get(i).serviceInfo.packageName;
+            labels[i + 1] = services.get(i).loadLabel(pm).toString();
         }
 
         String savedKey = settings.getTtsEngine();
@@ -328,24 +313,21 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < ttsVoiceKeys.length; i++) {
             if (ttsVoiceKeys[i].equals(savedKey)) { savedPos = i; break; }
         }
-        final int selectionPos = savedPos;
 
-        runOnUiThread(() -> {
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                    android.R.layout.simple_spinner_item, labels);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerTtsVoice.setAdapter(adapter);
-            spinnerTtsVoice.setSelection(selectionPos);
-            spinnerTtsVoice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                boolean initializing = true;
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    if (initializing) { initializing = false; return; }
-                    settings.setTtsEngine(ttsVoiceKeys[position]);
-                }
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {}
-            });
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, labels);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerTtsVoice.setAdapter(adapter);
+        spinnerTtsVoice.setSelection(savedPos);
+        spinnerTtsVoice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            boolean initializing = true;
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (initializing) { initializing = false; return; }
+                settings.setTtsEngine(ttsVoiceKeys[position]);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
         });
     }
 

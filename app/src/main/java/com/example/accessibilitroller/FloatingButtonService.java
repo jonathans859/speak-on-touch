@@ -67,6 +67,8 @@ public class FloatingButtonService extends Service {
             (prefs, key) -> {
                 if (SettingsManager.KEY_BUTTON_COLOR.equals(key)) {
                     applyButtonColor(settings.getButtonColor());
+                } else if (SettingsManager.KEY_BUTTON_STYLE.equals(key)) {
+                    updateButtonStyle();
                 }
             };
 
@@ -201,6 +203,15 @@ public class FloatingButtonService extends Service {
         buttonView.setContentDescription(speakModeActive
                 ? getString(R.string.button_desc_active)
                 : getString(R.string.button_desc_inactive));
+    }
+
+    private void updateButtonStyle() {
+        if (speakModeActive) deactivateSpeakMode();
+        if (buttonView != null && buttonView.isAttachedToWindow()) {
+            windowManager.removeView(buttonView);
+            buttonView = null;
+        }
+        setupOverlay();
     }
 
     private void applyButtonColor(int color) {
