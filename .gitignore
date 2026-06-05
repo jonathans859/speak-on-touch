@@ -3,6 +3,7 @@ build/
 local.properties
 *.jks
 *.keystore
+!keystore/debug.keystore
 .idea/
 *.iml
 .DS_Store
