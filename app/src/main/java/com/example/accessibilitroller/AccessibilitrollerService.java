@@ -18,7 +18,9 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import java.util.List;
 import java.util.Locale;
 
 public class AccessibilitrollerService extends AccessibilityService {
@@ -142,17 +144,27 @@ public class AccessibilitrollerService extends AccessibilityService {
     // ── Speak ─────────────────────────────────────────────────────────────────
 
     private void speakNodeAtCoordinates(int x, int y) {
-        AccessibilityNodeInfo root = getRootInActiveWindow();
-        if (root == null) return;
-        SettingsManager sm = SettingsManager.getInstance(this);
-        AccessibilityNodeInfo target = sm.getReadBackgrounds()
-                ? findDeepestNodeAt(root, x, y)
-                : findMeaningfulNodeAt(root, x, y);
-        if (target != null) {
-            speakNode(target);
-        } else {
-            root.recycle();
+        boolean readBg = SettingsManager.getInstance(this).getReadBackgrounds();
+        AccessibilityNodeInfo target = null;
+
+        // Search all windows (status bar, system UI, active app) front-to-back
+        List<AccessibilityWindowInfo> windows = getWindows();
+        if (windows != null) {
+            for (AccessibilityWindowInfo window : windows) {
+                AccessibilityNodeInfo root = window.getRoot();
+                if (root == null) continue;
+                target = readBg ? findDeepestNodeAt(root, x, y) : findMeaningfulNodeAt(root, x, y);
+                if (target != null) break;
+            }
         }
+        if (target == null) {
+            // Fallback for when getWindows() returns nothing
+            AccessibilityNodeInfo root = getRootInActiveWindow();
+            if (root != null) {
+                target = readBg ? findDeepestNodeAt(root, x, y) : findMeaningfulNodeAt(root, x, y);
+            }
+        }
+        if (target != null) speakNode(target);
     }
 
     private AccessibilityNodeInfo findMeaningfulNodeAt(AccessibilityNodeInfo node, int x, int y) {
