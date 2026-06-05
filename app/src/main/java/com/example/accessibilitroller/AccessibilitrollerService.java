@@ -17,17 +17,21 @@ import java.util.Set;
 public class AccessibilitrollerService extends AccessibilityService {
 
     private static final String TAG = "AccessibilitrollerSvc";
-    public static final String ACTION_TOGGLE_SPEAK =
-            "com.example.accessibilitroller.TOGGLE_SPEAK";
+
+    // FloatingButtonService sends this with EXTRA_X / EXTRA_Y to request a speak
+    public static final String ACTION_SPEAK_AT = "com.example.accessibilitroller.SPEAK_AT";
+    public static final String EXTRA_X = "x";
+    public static final String EXTRA_Y = "y";
 
     private TextToSpeech tts;
     private boolean ttsReady = false;
-    private boolean speakOnTouchEnabled = false;
 
-    private final BroadcastReceiver toggleReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver speakReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            speakOnTouchEnabled = !speakOnTouchEnabled;
+            int x = intent.getIntExtra(EXTRA_X, -1);
+            int y = intent.getIntExtra(EXTRA_Y, -1);
+            if (x >= 0 && y >= 0) speakNodeAtCoordinates(x, y);
         }
     };
 
@@ -45,23 +49,18 @@ public class AccessibilitrollerService extends AccessibilityService {
         });
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                toggleReceiver, new IntentFilter(ACTION_TOGGLE_SPEAK));
+                speakReceiver, new IntentFilter(ACTION_SPEAK_AT));
     }
 
     @Override
-    public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (!speakOnTouchEnabled) return;
-        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_HOVER_ENTER) {
-            speakNode(event.getSource());
-        }
-    }
+    public void onAccessibilityEvent(AccessibilityEvent event) {}
 
     @Override
     public void onInterrupt() {}
 
     @Override
     public void onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(toggleReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(speakReceiver);
         if (tts != null) {
             tts.stop();
             tts.shutdown();
@@ -95,7 +94,18 @@ public class AccessibilitrollerService extends AccessibilityService {
         ttsReady = true;
     }
 
-    // ── speakNode ─────────────────────────────────────────────────────────────
+    // ── Speak ─────────────────────────────────────────────────────────────────
+
+    private void speakNodeAtCoordinates(int x, int y) {
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null) return;
+        AccessibilityNodeInfo target = findDeepestNodeAt(root, x, y);
+        if (target != null) {
+            speakNode(target);
+        } else {
+            root.recycle();
+        }
+    }
 
     private void speakNode(AccessibilityNodeInfo node) {
         if (node == null) return;
@@ -113,20 +123,6 @@ public class AccessibilitrollerService extends AccessibilityService {
         node.recycle();
     }
 
-    // ── Coordinate-based fallback ─────────────────────────────────────────────
-    // Used for custom views that do not fire TYPE_VIEW_HOVER_ENTER.
-
-    public void speakNodeAtCoordinates(int x, int y) {
-        AccessibilityNodeInfo root = getRootInActiveWindow();
-        if (root == null) return;
-        AccessibilityNodeInfo target = findDeepestNodeAt(root, x, y);
-        if (target != null) {
-            speakNode(target);
-        } else {
-            root.recycle();
-        }
-    }
-
     private AccessibilityNodeInfo findDeepestNodeAt(AccessibilityNodeInfo node, int x, int y) {
         Rect rect = new Rect();
         node.getBoundsInScreen(rect);
@@ -134,7 +130,6 @@ public class AccessibilitrollerService extends AccessibilityService {
             node.recycle();
             return null;
         }
-        // Prefer the deepest child that contains the point
         for (int i = node.getChildCount() - 1; i >= 0; i--) {
             AccessibilityNodeInfo child = node.getChild(i);
             if (child == null) continue;

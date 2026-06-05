@@ -311,8 +311,16 @@ public class FloatingButtonService extends Service {
         String action = settings.getGestureAction(gestureKey);
         switch (action) {
             case SettingsManager.ACTION_SPEAK_ON_TOUCH:
-                LocalBroadcastManager.getInstance(this).sendBroadcast(
-                        new Intent(AccessibilitrollerService.ACTION_TOGGLE_SPEAK));
+                if (buttonView != null) {
+                    int[] loc = new int[2];
+                    buttonView.getLocationOnScreen(loc);
+                    int cx = loc[0] + buttonView.getWidth() / 2;
+                    int cy = loc[1] + buttonView.getHeight() / 2;
+                    Intent broadcast = new Intent(AccessibilitrollerService.ACTION_SPEAK_AT);
+                    broadcast.putExtra(AccessibilitrollerService.EXTRA_X, cx);
+                    broadcast.putExtra(AccessibilitrollerService.EXTRA_Y, cy);
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
+                }
                 break;
             case SettingsManager.ACTION_ENABLE_DRAG:
                 enterDragMode();
