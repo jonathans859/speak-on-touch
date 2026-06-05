@@ -24,7 +24,10 @@ org.gradle.jvmargs=-Xmx2048m
 ```
 
 ### Debug signing (`app/build.gradle`)
-Explicit signing config that points to `~/.android/debug.keystore` is required so APK updates install without uninstalling. CI caches the keystore with `actions/cache@v4` key `debug-keystore-v1`.
+Keystore is committed at `keystore/debug.keystore` (`.gitignore` has a `!keystore/debug.keystore` exception).  
+`build.gradle` references it via `rootProject.file("keystore/debug.keystore")` — works identically for local builds and CI.  
+Credentials: storePassword `android`, keyAlias `androiddebugkey`, keyPassword `android`.  
+No release keystore exists — debug only.
 
 ---
 
@@ -155,9 +158,9 @@ The `TYPE_ACCESSIBILITY_OVERLAY` approach makes this unnecessary.
 ### CI
 `.github/workflows/build.yml` uses:
 - `gradle/actions/setup-gradle@v4` with `gradle-version: '8.7'`
-- `actions/cache@v4` for keystore (key: `debug-keystore-v1`)
 - `gradle assembleDebug` (not `./gradlew` — no wrapper JAR committed)
 - Artifact upload: `app/build/outputs/apk/debug/app-debug.apk`
+- No keystore cache step — keystore is committed to the repo at `keystore/debug.keystore`
 
 ---
 
@@ -215,6 +218,6 @@ No pending tasks.
 - `CardView` does not support stroke — must use `MaterialCardView` for selection indicators.
 - Hardcoding `colorBackground`/`colorSurface` in `themes.xml` breaks dark mode.
 - `GradientDrawable` is in `android.graphics.drawable`, not `android.graphics`.
-- Fresh CI keystore on every run = signature mismatch on update install — must cache the keystore.
+- GitHub Actions cache evicts after 7 days of inactivity — do not use cache for the keystore. Commit it to the repo instead (debug keystores have no monetary value).
 - No `gradle-wrapper.jar` in repo — use `gradle/actions/setup-gradle` with explicit version.
 - `<queries>` block required in `AndroidManifest.xml` for `PackageManager.queryIntentServices` on Android 11+.
