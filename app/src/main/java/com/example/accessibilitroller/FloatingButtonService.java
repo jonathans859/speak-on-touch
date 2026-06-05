@@ -13,6 +13,8 @@ import android.graphics.Point;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -28,6 +30,7 @@ public class FloatingButtonService extends Service {
 
     private static final String CHANNEL_ID = "accessibilitroller_channel";
     private static final int NOTIFICATION_ID = 1001;
+    private static final long SPEAK_DEBOUNCE_MS = 350;
 
     private static boolean running = false;
 
@@ -52,6 +55,11 @@ public class FloatingButtonService extends Service {
     private boolean dragMode = false;
     private float dragStartX, dragStartY;
     private int dragStartParamX, dragStartParamY;
+
+    // Speak mode
+    private boolean speakModeActive = false;
+    private View speakOverlay;
+    private long lastSpeakTime = 0;
 
     public static boolean isRunning() {
         return running;
@@ -78,6 +86,7 @@ public class FloatingButtonService extends Service {
         running = false;
         cancelLongPress();
         cancelResolution();
+        removeSpeakOverlay();
         if (buttonView != null && buttonView.isAttachedToWindow()) {
             windowManager.removeView(buttonView);
             buttonView = null;
@@ -154,6 +163,73 @@ public class FloatingButtonService extends Service {
         return handleGesture(event);
     }
 
+    // ── Speak mode ────────────────────────────────────────────────────────────
+
+    private void activateSpeakMode() {
+        speakModeActive = true;
+        vibrate(50);
+        if (buttonView != null) buttonView.setAlpha(0.6f);
+
+        // Full-screen transparent window to catch all finger movement
+        WindowManager.LayoutParams overlayParams = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSPARENT);
+        speakOverlay = new View(this);
+        speakOverlay.setOnTouchListener(this::onSpeakTouch);
+        windowManager.addView(speakOverlay, overlayParams);
+
+        // Re-add button on top of the overlay so its own gestures still work
+        if (buttonView != null && buttonView.isAttachedToWindow()) {
+            windowManager.removeView(buttonView);
+            windowManager.addView(buttonView, params);
+        }
+    }
+
+    private void deactivateSpeakMode() {
+        speakModeActive = false;
+        if (buttonView != null) buttonView.setAlpha(1.0f);
+        removeSpeakOverlay();
+        vibrate(30);
+    }
+
+    private void removeSpeakOverlay() {
+        if (speakOverlay != null && speakOverlay.isAttachedToWindow()) {
+            windowManager.removeView(speakOverlay);
+        }
+        speakOverlay = null;
+    }
+
+    private boolean onSpeakTouch(View v, MotionEvent event) {
+        int action = event.getAction();
+        if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
+            long now = System.currentTimeMillis();
+            // Speak immediately on touch-down; debounce swipe movement
+            if (action == MotionEvent.ACTION_DOWN || now - lastSpeakTime >= SPEAK_DEBOUNCE_MS) {
+                lastSpeakTime = now;
+                broadcastSpeak((int) event.getRawX(), (int) event.getRawY());
+            }
+        }
+        return true;
+    }
+
+    private void broadcastSpeak(int x, int y) {
+        Intent broadcast = new Intent(AccessibilitrollerService.ACTION_SPEAK_AT);
+        broadcast.putExtra(AccessibilitrollerService.EXTRA_X, x);
+        broadcast.putExtra(AccessibilitrollerService.EXTRA_Y, y);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
+    }
+
+    private void vibrate(long ms) {
+        Vibrator vib = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        if (vib != null && vib.hasVibrator()) {
+            vib.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
+    }
+
     // ── Drag mode ─────────────────────────────────────────────────────────────
 
     private void enterDragMode() {
@@ -218,9 +294,9 @@ public class FloatingButtonService extends Service {
         ValueAnimator anim = ValueAnimator.ofFloat(from, to);
         anim.setDuration(150);
         anim.addUpdateListener(a -> {
-            float v = (float) a.getAnimatedValue();
-            buttonView.setScaleX(v);
-            buttonView.setScaleY(v);
+            float val = (float) a.getAnimatedValue();
+            buttonView.setScaleX(val);
+            buttonView.setScaleY(val);
         });
         anim.start();
     }
@@ -253,7 +329,6 @@ public class FloatingButtonService extends Service {
             gestureHandler.postDelayed(longPressRunnable, ViewConfiguration.getLongPressTimeout());
 
         } else if (gestureState == GESTURE_FIRST_WAITING) {
-            // Second tap arrived while waiting for double-tap resolution
             cancelResolution();
             gestureState = GESTURE_SECOND_DOWN;
             longPressRunnable = () -> {
@@ -308,19 +383,16 @@ public class FloatingButtonService extends Service {
     // ── Action dispatch ───────────────────────────────────────────────────────
 
     private void executeGestureAction(String gestureKey) {
+        // Any button press while speak mode is active toggles it off
+        if (speakModeActive) {
+            deactivateSpeakMode();
+            return;
+        }
+
         String action = settings.getGestureAction(gestureKey);
         switch (action) {
             case SettingsManager.ACTION_SPEAK_ON_TOUCH:
-                if (buttonView != null) {
-                    int[] loc = new int[2];
-                    buttonView.getLocationOnScreen(loc);
-                    int cx = loc[0] + buttonView.getWidth() / 2;
-                    int cy = loc[1] + buttonView.getHeight() / 2;
-                    Intent broadcast = new Intent(AccessibilitrollerService.ACTION_SPEAK_AT);
-                    broadcast.putExtra(AccessibilitrollerService.EXTRA_X, cx);
-                    broadcast.putExtra(AccessibilitrollerService.EXTRA_Y, cy);
-                    LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
-                }
+                activateSpeakMode();
                 break;
             case SettingsManager.ACTION_ENABLE_DRAG:
                 enterDragMode();
