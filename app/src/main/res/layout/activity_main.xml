@@ -26,7 +26,7 @@
             android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
             android:layout_marginBottom="8dp" />
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
@@ -57,9 +57,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/grant" />
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
@@ -90,9 +90,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/open_settings" />
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
@@ -123,7 +123,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/grant" />
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- SECTION 2: Button Appearance -->
         <TextView
@@ -139,7 +139,7 @@
             android:orientation="horizontal"
             android:layout_marginBottom="24dp">
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_circle"
                 android:layout_width="0dp"
                 android:layout_height="120dp"
@@ -148,7 +148,8 @@
                 android:clickable="true"
                 android:focusable="true"
                 app:cardElevation="2dp"
-                app:cardCornerRadius="8dp">
+                app:cardCornerRadius="8dp"
+                app:strokeWidth="0dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -166,9 +167,9 @@
                         android:text="@string/style_circle"
                         android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_semicircle"
                 android:layout_width="0dp"
                 android:layout_height="120dp"
@@ -177,7 +178,8 @@
                 android:clickable="true"
                 android:focusable="true"
                 app:cardElevation="2dp"
-                app:cardCornerRadius="8dp">
+                app:cardCornerRadius="8dp"
+                app:strokeWidth="0dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -195,7 +197,7 @@
                         android:text="@string/style_semicircle"
                         android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
         <TextView
@@ -334,6 +336,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/highlight_enabled_label"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_read_backgrounds"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/read_backgrounds_label"
             android:layout_marginBottom="16dp" />
 
         <!-- SECTION 5: Service Toggle -->

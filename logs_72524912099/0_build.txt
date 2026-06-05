@@ -1,0 +1,366 @@
+﻿2026-06-05T10:42:42.0493360Z Current runner version: '2.334.0'
+2026-06-05T10:42:42.0531343Z ##[group]Runner Image Provisioner
+2026-06-05T10:42:42.0532847Z Hosted Compute Agent
+2026-06-05T10:42:42.0533836Z Version: 20260520.533
+2026-06-05T10:42:42.0535391Z Commit: 189110e25284a9812c124fd27b339e2fb4f2f9db
+2026-06-05T10:42:42.0536662Z Build Date: 2026-05-20T17:44:04Z
+2026-06-05T10:42:42.0537797Z Worker ID: {068ca8fe-4679-4f72-b2bc-a8b46261c046}
+2026-06-05T10:42:42.0539167Z Azure Region: eastus
+2026-06-05T10:42:42.0540125Z ##[endgroup]
+2026-06-05T10:42:42.0542632Z ##[group]Operating System
+2026-06-05T10:42:42.0543708Z Ubuntu
+2026-06-05T10:42:42.0544596Z 24.04.4
+2026-06-05T10:42:42.0546392Z LTS
+2026-06-05T10:42:42.0547378Z ##[endgroup]
+2026-06-05T10:42:42.0548410Z ##[group]Runner Image
+2026-06-05T10:42:42.0549813Z Image: ubuntu-24.04
+2026-06-05T10:42:42.0550838Z Version: 20260525.161.1
+2026-06-05T10:42:42.0553078Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260525.161/images/ubuntu/Ubuntu2404-Readme.md
+2026-06-05T10:42:42.0556480Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260525.161
+2026-06-05T10:42:42.0558289Z ##[endgroup]
+2026-06-05T10:42:42.0560488Z ##[group]GITHUB_TOKEN Permissions
+2026-06-05T10:42:42.0563867Z Contents: read
+2026-06-05T10:42:42.0564928Z Metadata: read
+2026-06-05T10:42:42.0567071Z Packages: read
+2026-06-05T10:42:42.0568004Z ##[endgroup]
+2026-06-05T10:42:42.0571223Z Secret source: Actions
+2026-06-05T10:42:42.0572759Z Prepare workflow directory
+2026-06-05T10:42:42.1076911Z Prepare all required actions
+2026-06-05T10:42:42.1135561Z Getting action download info
+2026-06-05T10:42:42.7117195Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-06-05T10:42:42.8519287Z Download action repository 'actions/setup-java@v4' (SHA:c1e323688fd81a25caa38c78aa6df2d33d3e20d9)
+2026-06-05T10:42:43.1063518Z Download action repository 'actions/cache@v4' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+2026-06-05T10:42:43.2221913Z Download action repository 'gradle/actions@v4' (SHA:ed408507eac070d1f99cc633dbcf757c94c7933a)
+2026-06-05T10:42:43.9398234Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-06-05T10:42:44.2441384Z Complete job name: build
+2026-06-05T10:42:44.3373135Z ##[group]Run actions/checkout@v4
+2026-06-05T10:42:44.3374619Z with:
+2026-06-05T10:42:44.3375878Z   repository: Jonathans859/accessibilitroller
+2026-06-05T10:42:44.3386007Z   token: ***
+2026-06-05T10:42:44.3386879Z   ssh-strict: true
+2026-06-05T10:42:44.3387786Z   ssh-user: git
+2026-06-05T10:42:44.3388689Z   persist-credentials: true
+2026-06-05T10:42:44.3389684Z   clean: true
+2026-06-05T10:42:44.3390597Z   sparse-checkout-cone-mode: true
+2026-06-05T10:42:44.3391672Z   fetch-depth: 1
+2026-06-05T10:42:44.3392569Z   fetch-tags: false
+2026-06-05T10:42:44.3393461Z   show-progress: true
+2026-06-05T10:42:44.3394591Z   lfs: false
+2026-06-05T10:42:44.3396071Z   submodules: false
+2026-06-05T10:42:44.3397044Z   set-safe-directory: true
+2026-06-05T10:42:44.3398502Z ##[endgroup]
+2026-06-05T10:42:44.4825816Z Syncing repository: Jonathans859/accessibilitroller
+2026-06-05T10:42:44.4830465Z ##[group]Getting Git version info
+2026-06-05T10:42:44.4833346Z Working directory is '/home/runner/work/accessibilitroller/accessibilitroller'
+2026-06-05T10:42:44.4837641Z [command]/usr/bin/git version
+2026-06-05T10:42:44.4839533Z git version 2.54.0
+2026-06-05T10:42:44.4861606Z ##[endgroup]
+2026-06-05T10:42:44.4880944Z Temporarily overriding HOME='/home/runner/work/_temp/12b202b0-62e6-4de9-91ea-5837a2420d34' before making global git config changes
+2026-06-05T10:42:44.4886419Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-05T10:42:44.4904177Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/accessibilitroller/accessibilitroller
+2026-06-05T10:42:44.4958507Z Deleting the contents of '/home/runner/work/accessibilitroller/accessibilitroller'
+2026-06-05T10:42:44.4970120Z ##[group]Initializing the repository
+2026-06-05T10:42:44.4986928Z [command]/usr/bin/git init /home/runner/work/accessibilitroller/accessibilitroller
+2026-06-05T10:42:44.5067136Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-05T10:42:44.5069344Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-05T10:42:44.5071237Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-05T10:42:44.5072712Z hint: call:
+2026-06-05T10:42:44.5073505Z hint:
+2026-06-05T10:42:44.5074487Z hint: 	git config --global init.defaultBranch <name>
+2026-06-05T10:42:44.5076568Z hint:
+2026-06-05T10:42:44.5078530Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-05T10:42:44.5081855Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-05T10:42:44.5084547Z hint:
+2026-06-05T10:42:44.5086375Z hint: 	git branch -m <name>
+2026-06-05T10:42:44.5088063Z hint:
+2026-06-05T10:42:44.5090186Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-05T10:42:44.5094334Z Initialized empty Git repository in /home/runner/work/accessibilitroller/accessibilitroller/.git/
+2026-06-05T10:42:44.5106681Z [command]/usr/bin/git remote add origin https://github.com/Jonathans859/accessibilitroller
+2026-06-05T10:42:44.5153048Z ##[endgroup]
+2026-06-05T10:42:44.5157118Z ##[group]Disabling automatic garbage collection
+2026-06-05T10:42:44.5160072Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-05T10:42:44.5197935Z ##[endgroup]
+2026-06-05T10:42:44.5200828Z ##[group]Setting up auth
+2026-06-05T10:42:44.5204924Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-05T10:42:44.5247761Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-05T10:42:44.5619888Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-05T10:42:44.5669061Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-05T10:42:44.5907850Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-05T10:42:44.5956818Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-05T10:42:44.6217403Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-05T10:42:44.6259845Z ##[endgroup]
+2026-06-05T10:42:44.6263052Z ##[group]Fetching the repository
+2026-06-05T10:42:44.6273592Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +ef987c1f5dd62c533cea2f71d8d12fc706adc913:refs/remotes/origin/main
+2026-06-05T10:42:44.8596427Z From https://github.com/Jonathans859/accessibilitroller
+2026-06-05T10:42:44.8598048Z  * [new ref]         ef987c1f5dd62c533cea2f71d8d12fc706adc913 -> origin/main
+2026-06-05T10:42:44.8626087Z ##[endgroup]
+2026-06-05T10:42:44.8627466Z ##[group]Determining the checkout info
+2026-06-05T10:42:44.8628928Z ##[endgroup]
+2026-06-05T10:42:44.8634553Z [command]/usr/bin/git sparse-checkout disable
+2026-06-05T10:42:44.8684633Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-05T10:42:44.8717061Z ##[group]Checking out the ref
+2026-06-05T10:42:44.8720740Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-06-05T10:42:44.8798894Z Switched to a new branch 'main'
+2026-06-05T10:42:44.8800081Z branch 'main' set up to track 'origin/main'.
+2026-06-05T10:42:44.8804457Z ##[endgroup]
+2026-06-05T10:42:44.8848201Z [command]/usr/bin/git log -1 --format=%H
+2026-06-05T10:42:44.8872649Z ef987c1f5dd62c533cea2f71d8d12fc706adc913
+2026-06-05T10:42:44.9153952Z ##[group]Run actions/setup-java@v4
+2026-06-05T10:42:44.9154578Z with:
+2026-06-05T10:42:44.9154818Z   java-version: 17
+2026-06-05T10:42:44.9155590Z   distribution: temurin
+2026-06-05T10:42:44.9155927Z   java-package: jdk
+2026-06-05T10:42:44.9156188Z   check-latest: false
+2026-06-05T10:42:44.9156444Z   server-id: github
+2026-06-05T10:42:44.9156720Z   server-username: GITHUB_ACTOR
+2026-06-05T10:42:44.9157026Z   server-password: GITHUB_TOKEN
+2026-06-05T10:42:44.9157327Z   overwrite-settings: true
+2026-06-05T10:42:44.9157614Z   job-status: success
+2026-06-05T10:42:44.9160465Z   token: ***
+2026-06-05T10:42:44.9160712Z ##[endgroup]
+2026-06-05T10:42:45.1877177Z ##[group]Installed distributions
+2026-06-05T10:42:45.2719423Z Resolved Java 17.0.19+10 from tool-cache
+2026-06-05T10:42:45.2720769Z Setting Java 17.0.19+10 as the default
+2026-06-05T10:42:45.2722469Z Creating toolchains.xml for JDK version 17 from temurin
+2026-06-05T10:42:45.2723805Z Writing to /home/runner/.m2/toolchains.xml
+2026-06-05T10:42:45.2725472Z 
+2026-06-05T10:42:45.2731673Z Java configuration:
+2026-06-05T10:42:45.2744921Z   Distribution: temurin
+2026-06-05T10:42:45.2746981Z   Version: 17.0.19+10
+2026-06-05T10:42:45.2748363Z   Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-06-05T10:42:45.2749944Z 
+2026-06-05T10:42:45.2751262Z ##[endgroup]
+2026-06-05T10:42:45.2776500Z Creating settings.xml with server-id: github
+2026-06-05T10:42:45.2777843Z Writing to /home/runner/.m2/settings.xml
+2026-06-05T10:42:45.2903829Z ##[group]Run actions/cache@v4
+2026-06-05T10:42:45.2904408Z with:
+2026-06-05T10:42:45.2904843Z   path: ~/.android/debug.keystore
+2026-06-05T10:42:45.2905787Z   key: debug-keystore-v1
+2026-06-05T10:42:45.2906303Z   enableCrossOsArchive: false
+2026-06-05T10:42:45.2906838Z   fail-on-cache-miss: false
+2026-06-05T10:42:45.2907329Z   lookup-only: false
+2026-06-05T10:42:45.2907799Z   save-always: false
+2026-06-05T10:42:45.2908222Z env:
+2026-06-05T10:42:45.2908803Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-06-05T10:42:45.2909782Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-06-05T10:42:45.2910602Z ##[endgroup]
+2026-06-05T10:42:45.6303102Z Cache hit for: debug-keystore-v1
+2026-06-05T10:42:45.6977090Z Received 2764 of 2764 (100.0%), 0.2 MBs/sec
+2026-06-05T10:42:45.6979176Z Cache Size: ~0 MB (2764 B)
+2026-06-05T10:42:45.7044524Z [command]/usr/bin/tar -xf /home/runner/work/_temp/6d009d9a-24e6-4694-891a-8d7480a850b9/cache.tzst -P -C /home/runner/work/accessibilitroller/accessibilitroller --use-compress-program unzstd
+2026-06-05T10:42:45.7143611Z Cache restored successfully
+2026-06-05T10:42:45.7284305Z Cache restored from key: debug-keystore-v1
+2026-06-05T10:42:45.7561189Z ##[group]Run gradle/actions/setup-gradle@v4
+2026-06-05T10:42:45.7561580Z with:
+2026-06-05T10:42:45.7561833Z   gradle-version: 8.7
+2026-06-05T10:42:45.7562123Z   cache-disabled: false
+2026-06-05T10:42:45.7562406Z   cache-read-only: false
+2026-06-05T10:42:45.7562716Z   cache-write-only: false
+2026-06-05T10:42:45.7563036Z   cache-overwrite-existing: false
+2026-06-05T10:42:45.7563354Z   cache-cleanup: on-success
+2026-06-05T10:42:45.7563712Z   gradle-home-cache-includes: caches
+notifications
+
+2026-06-05T10:42:45.7564093Z   add-job-summary: always
+2026-06-05T10:42:45.7564397Z   add-job-summary-as-pr-comment: never
+2026-06-05T10:42:45.7564737Z   dependency-graph: disabled
+2026-06-05T10:42:45.7565333Z   dependency-graph-report-dir: dependency-graph-reports
+2026-06-05T10:42:45.7565756Z   dependency-graph-continue-on-failure: true
+2026-06-05T10:42:45.7566113Z   build-scan-publish: false
+2026-06-05T10:42:45.7566419Z   validate-wrappers: true
+2026-06-05T10:42:45.7566758Z   allow-snapshot-wrappers: false
+2026-06-05T10:42:45.7567094Z   gradle-home-cache-strict-match: false
+2026-06-05T10:42:45.7567428Z   workflow-job-context: null
+2026-06-05T10:42:45.7570290Z   github-token: ***
+2026-06-05T10:42:45.7570559Z env:
+2026-06-05T10:42:45.7570915Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-06-05T10:42:45.7571670Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-06-05T10:42:45.7572116Z ##[endgroup]
+2026-06-05T10:42:46.4133590Z Merged default JDK locations into /home/runner/.m2/toolchains.xml
+2026-06-05T10:42:46.4154693Z Preparing cache for cleanup.
+2026-06-05T10:42:46.4177466Z ##[group]Restore Gradle state from cache
+2026-06-05T10:42:46.6708850Z Cache hit for restore-key: gradle-home-v1|Linux-X64|build[ddef187d23c5c0a012a82b60c8f7590e]-f97428492826770e2b691df1ade1343195f3bfb3
+2026-06-05T10:42:46.8036089Z Received 1851837 of 1851837 (100.0%), 21.0 MBs/sec
+2026-06-05T10:42:46.8046465Z Cache Size: ~2 MB (1851837 B)
+2026-06-05T10:42:46.8109994Z [command]/usr/bin/tar -xf /home/runner/work/_temp/13feb5b5-bf65-4200-997e-437a69320c2f/cache.tzst -P -C /home/runner/work/accessibilitroller/accessibilitroller --use-compress-program unzstd
+2026-06-05T10:42:46.9385746Z Cache restored successfully
+2026-06-05T10:42:46.9406226Z Restored cache entry with key gradle-home-v1|Linux-X64|build[ddef187d23c5c0a012a82b60c8f7590e]-ef987c1f5dd62c533cea2f71d8d12fc706adc913 to /home/runner/.gradle/caches,/home/runner/.gradle/notifications,/home/runner/.gradle/.setup-gradle in 523ms
+2026-06-05T10:42:47.0798998Z Cache hit for: gradle-transforms-v1-be7aa4b3d767bdaf2c2558adeb166730
+2026-06-05T10:42:47.0932000Z Cache hit for: gradle-groovy-dsl-v1-6c5431b7d7609fd8c42c409177c6e27b
+2026-06-05T10:42:47.0964670Z Cache hit for: gradle-dependencies-v1-2d81b7594769feda102faed1623fcb9b
+2026-06-05T10:42:47.0968717Z Cache hit for: gradle-instrumented-jars-v1-482bb94537ea080d2460bc18dde0f094
+2026-06-05T10:42:47.4181382Z Received 101974 of 101974 (100.0%), 0.4 MBs/sec
+2026-06-05T10:42:47.4391379Z Cache Size: ~0 MB (101974 B)
+2026-06-05T10:42:47.4487429Z Received 169329 of 169329 (100.0%), 0.6 MBs/sec
+2026-06-05T10:42:47.4499048Z Cache Size: ~0 MB (169329 B)
+2026-06-05T10:42:47.6847073Z [command]/usr/bin/tar -xf /home/runner/work/_temp/6f7064f5-68f2-47f3-8b47-7bd0e84e92c2/cache.tzst -P -C /home/runner/work/accessibilitroller/accessibilitroller --use-compress-program unzstd
+2026-06-05T10:42:47.7123649Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d2a5e653-e1f6-4927-90ff-987f7e9de3c8/cache.tzst -P -C /home/runner/work/accessibilitroller/accessibilitroller --use-compress-program unzstd
+2026-06-05T10:42:47.7543553Z Cache restored successfully
+2026-06-05T10:42:47.7556956Z Restored cache entry with key gradle-instrumented-jars-v1-482bb94537ea080d2460bc18dde0f094 to /home/runner/.gradle/caches/jars-*/*/ in 795ms
+2026-06-05T10:42:47.7998914Z Cache restored successfully
+2026-06-05T10:42:47.8292792Z Restored cache entry with key gradle-groovy-dsl-v1-6c5431b7d7609fd8c42c409177c6e27b to /home/runner/.gradle/caches/*/groovy-dsl/*/ in 887ms
+2026-06-05T10:42:48.0047969Z Received 105749586 of 105749586 (100.0%), 112.4 MBs/sec
+2026-06-05T10:42:48.0048957Z Cache Size: ~101 MB (105749586 B)
+2026-06-05T10:42:48.0152001Z [command]/usr/bin/tar -xf /home/runner/work/_temp/2a17d0fa-9c3b-49cd-b295-24b6b3be0288/cache.tzst -P -C /home/runner/work/accessibilitroller/accessibilitroller --use-compress-program unzstd
+2026-06-05T10:42:48.1753184Z Received 67108864 of 99846037 (67.2%), 64.1 MBs/sec
+2026-06-05T10:42:48.3413334Z Received 99846037 of 99846037 (100.0%), 81.7 MBs/sec
+2026-06-05T10:42:48.3419932Z Cache Size: ~95 MB (99846037 B)
+2026-06-05T10:42:48.3473099Z [command]/usr/bin/tar -xf /home/runner/work/_temp/a0f31eab-347d-4a74-9150-c8bbd47e5169/cache.tzst -P -C /home/runner/work/accessibilitroller/accessibilitroller --use-compress-program unzstd
+2026-06-05T10:42:48.6967864Z Cache restored successfully
+2026-06-05T10:42:48.7037029Z Restored cache entry with key gradle-dependencies-v1-2d81b7594769feda102faed1623fcb9b to /home/runner/.gradle/caches/modules-*/files-*/*/*/*/* in 1762ms
+2026-06-05T10:42:49.9181141Z Cache restored successfully
+2026-06-05T10:42:49.9231413Z Restored cache entry with key gradle-transforms-v1-be7aa4b3d767bdaf2c2558adeb166730 to /home/runner/.gradle/caches/transforms-4/*/,/home/runner/.gradle/caches/*/transforms/*/ in 2981ms
+2026-06-05T10:42:49.9806119Z ##[endgroup]
+2026-06-05T10:42:49.9878774Z ##[group]All Gradle Wrapper jars are valid
+2026-06-05T10:42:49.9880175Z 
+2026-06-05T10:42:49.9880885Z ##[endgroup]
+2026-06-05T10:42:50.0455724Z ##[group]Provision Gradle 8.7
+2026-06-05T10:42:54.6966459Z Cache hit for: gradle-8.7
+2026-06-05T10:42:55.5703993Z Received 133909426 of 133909426 (100.0%), 157.9 MBs/sec
+2026-06-05T10:42:55.5710232Z Cache Size: ~128 MB (133909426 B)
+2026-06-05T10:42:55.5743938Z [command]/usr/bin/tar -xf /home/runner/work/_temp/68ad5f29-aa0c-4cd9-a1fb-25f0ddc17b12/cache.tzst -P -C /home/runner/work/accessibilitroller/accessibilitroller --use-compress-program unzstd
+2026-06-05T10:42:55.7906648Z Cache restored successfully
+2026-06-05T10:42:55.8016885Z Restored Gradle distribution gradle-8.7 from cache to /home/runner/work/_temp/.gradle-actions/gradle-installations/downloads/gradle-8.7-bin.zip
+2026-06-05T10:42:55.8084529Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/.gradle-actions/gradle-installations/downloads/gradle-8.7-bin.zip
+2026-06-05T10:42:56.7776497Z Extracted Gradle 8.7 to /home/runner/work/_temp/.gradle-actions/gradle-installations/installs/gradle-8.7
+2026-06-05T10:42:56.7778636Z Provisioned Gradle executable /home/runner/work/_temp/.gradle-actions/gradle-installations/installs/gradle-8.7/bin/gradle
+2026-06-05T10:42:56.7780535Z ##[endgroup]
+2026-06-05T10:42:56.7963361Z ##[group]Run gradle assembleDebug
+2026-06-05T10:42:56.7963773Z [36;1mgradle assembleDebug[0m
+2026-06-05T10:42:56.7993429Z shell: /usr/bin/bash -e {0}
+2026-06-05T10:42:56.7993735Z env:
+2026-06-05T10:42:56.7994093Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-06-05T10:42:56.7994658Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-06-05T10:42:56.7995519Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+2026-06-05T10:42:56.7995879Z   GRADLE_USER_HOME: /home/runner/.gradle
+2026-06-05T10:42:56.7996209Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+2026-06-05T10:42:56.7996567Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+2026-06-05T10:42:56.7997043Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+2026-06-05T10:42:56.7997575Z   DEVELOCITY_INJECTION_CUSTOM_VALUE: gradle-actions
+2026-06-05T10:42:56.7997930Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+2026-06-05T10:42:56.7998269Z ##[endgroup]
+2026-06-05T10:42:57.7656314Z Starting a Gradle Daemon (subsequent builds will be faster)
+2026-06-05T10:43:10.1679941Z > Task :app:preBuild UP-TO-DATE
+2026-06-05T10:43:10.1695672Z > Task :app:preDebugBuild UP-TO-DATE
+2026-06-05T10:43:10.2632224Z > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+2026-06-05T10:43:11.0642212Z > Task :app:generateDebugResValues
+2026-06-05T10:43:11.0665960Z > Task :app:dataBindingMergeDependencyArtifactsDebug
+2026-06-05T10:43:11.1625317Z > Task :app:generateDebugResources
+2026-06-05T10:43:14.2629003Z > Task :app:packageDebugResources
+2026-06-05T10:43:16.0666410Z > Task :app:parseDebugLocalResources
+2026-06-05T10:43:16.1639509Z > Task :app:javaPreCompileDebug
+2026-06-05T10:43:16.2656203Z > Task :app:checkDebugAarMetadata
+2026-06-05T10:43:16.2673568Z > Task :app:mapDebugSourceSetPaths
+2026-06-05T10:43:16.3651735Z > Task :app:createDebugCompatibleScreenManifests
+2026-06-05T10:43:16.3654203Z > Task :app:extractDeepLinksDebug
+2026-06-05T10:43:16.5635870Z > Task :app:mergeDebugResources
+2026-06-05T10:43:16.7641876Z > Task :app:processDebugMainManifest
+2026-06-05T10:43:17.1636439Z > Task :app:dataBindingGenBaseClassesDebug
+2026-06-05T10:43:17.6634870Z > Task :app:processDebugManifest
+2026-06-05T10:43:17.6655334Z > Task :app:mergeDebugShaders
+2026-06-05T10:43:17.6656690Z > Task :app:compileDebugShaders NO-SOURCE
+2026-06-05T10:43:17.6657667Z > Task :app:generateDebugAssets UP-TO-DATE
+2026-06-05T10:43:17.7644028Z > Task :app:mergeDebugAssets
+2026-06-05T10:43:17.8631973Z > Task :app:compressDebugAssets
+2026-06-05T10:43:17.8676599Z > Task :app:desugarDebugFileDependencies
+2026-06-05T10:43:17.8725766Z > Task :app:processDebugJavaRes NO-SOURCE
+2026-06-05T10:43:17.9636680Z > Task :app:processDebugManifestForPackage
+2026-06-05T10:43:18.9646256Z > Task :app:mergeDebugJavaResource
+2026-06-05T10:43:19.2624359Z > Task :app:checkDebugDuplicateClasses
+2026-06-05T10:43:20.1634494Z > Task :app:processDebugResources
+2026-06-05T10:43:24.5635694Z 
+2026-06-05T10:43:24.5667034Z /home/runner/work/accessibilitroller/accessibilitroller/app/src/main/java/com/example/accessibilitroller/FloatingButtonService.java:11: error: cannot find symbol
+2026-06-05T10:43:24.5668604Z > Task :app:compileDebugJavaWithJavac
+2026-06-05T10:43:24.5717203Z import android.graphics.GradientDrawable;
+2026-06-05T10:43:24.5717887Z                        ^
+2026-06-05T10:43:24.5755599Z   symbol:   class GradientDrawable
+2026-06-05T10:43:24.5795562Z   location: package android.graphics
+2026-06-05T10:43:24.6667074Z /home/runner/work/accessibilitroller/accessibilitroller/app/src/main/java/com/example/accessibilitroller/MainActivity.java:6: error: cannot find symbol
+2026-06-05T10:43:24.6698874Z import android.graphics.GradientDrawable;
+2026-06-05T10:43:24.6745656Z                        ^
+2026-06-05T10:43:24.6762627Z   symbol:   class GradientDrawable
+2026-06-05T10:43:24.6785554Z   location: package android.graphics
+2026-06-05T10:43:25.0655343Z /home/runner/work/accessibilitroller/accessibilitroller/app/src/main/java/com/example/accessibilitroller/FloatingButtonService.java:158: error: cannot find symbol
+2026-06-05T10:43:25.0665795Z             GradientDrawable bg = new GradientDrawable();
+2026-06-05T10:43:25.0705511Z             ^
+2026-06-05T10:43:25.0729983Z   symbol:   class GradientDrawable
+2026-06-05T10:43:25.0778190Z   location: class FloatingButtonService
+2026-06-05T10:43:25.0816652Z /home/runner/work/accessibilitroller/accessibilitroller/app/src/main/java/com/example/accessibilitroller/FloatingButtonService.java:158: error: cannot find symbol
+2026-06-05T10:43:25.0845866Z             GradientDrawable bg = new GradientDrawable();
+2026-06-05T10:43:25.0905903Z                                       ^
+2026-06-05T10:43:25.0945835Z   symbol:   class GradientDrawable
+2026-06-05T10:43:25.0975733Z   location: class FloatingButtonService
+2026-06-05T10:43:25.1006517Z /home/runner/work/accessibilitroller/accessibilitroller/app/src/main/java/com/example/accessibilitroller/FloatingButtonService.java:159: error: cannot find symbol
+2026-06-05T10:43:25.1025799Z             bg.setShape(GradientDrawable.OVAL);
+2026-06-05T10:43:25.1080701Z                         ^
+2026-06-05T10:43:25.1085577Z   symbol:   variable GradientDrawable
+2026-06-05T10:43:25.1125728Z   location: class FloatingButtonService
+2026-06-05T10:43:25.3657023Z /home/runner/work/accessibilitroller/accessibilitroller/app/src/main/java/com/example/accessibilitroller/MainActivity.java:207: error: cannot find symbol
+2026-06-05T10:43:25.3695730Z             GradientDrawable bg = new GradientDrawable();
+2026-06-05T10:43:25.3715501Z             ^
+2026-06-05T10:43:25.3775517Z   symbol:   class GradientDrawable
+2026-06-05T10:43:25.3815542Z   location: class MainActivity
+2026-06-05T10:43:25.3856337Z /home/runner/work/accessibilitroller/accessibilitroller/app/src/main/java/com/example/accessibilitroller/MainActivity.java:207: error: cannot find symbol
+2026-06-05T10:43:25.3915835Z             GradientDrawable bg = new GradientDrawable();
+2026-06-05T10:43:25.3935674Z                                       ^
+2026-06-05T10:43:25.3936340Z   symbol:   class GradientDrawable
+2026-06-05T10:43:25.3995938Z   location: class MainActivity
+2026-06-05T10:43:25.3997653Z /home/runner/work/accessibilitroller/accessibilitroller/app/src/main/java/com/example/accessibilitroller/MainActivity.java:208: error: cannot find symbol
+2026-06-05T10:43:25.4015890Z             bg.setShape(GradientDrawable.OVAL);
+2026-06-05T10:43:25.4035684Z                         ^
+2026-06-05T10:43:25.4055497Z   symbol:   variable GradientDrawable
+2026-06-05T10:43:25.4056429Z   location: class MainActivity
+2026-06-05T10:43:25.5632197Z Note: Some input files use or override a deprecated API.
+2026-06-05T10:43:25.5633086Z 
+2026-06-05T10:43:25.5635926Z Note: Recompile with -Xlint:deprecation for details.
+2026-06-05T10:43:25.5636715Z > Task :app:compileDebugJavaWithJavac FAILED
+2026-06-05T10:43:25.5655752Z 8 errors
+2026-06-05T10:43:27.6636313Z > Task :app:mergeExtDexDebug
+2026-06-05T10:43:27.7631010Z 
+2026-06-05T10:43:27.7632227Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1780656182530.json
+2026-06-05T10:43:27.7653958Z FAILURE: Build failed with an exception.
+2026-06-05T10:43:27.7654588Z 24 actionable tasks: 24 executed
+2026-06-05T10:43:27.7671475Z 
+2026-06-05T10:43:27.7671918Z * What went wrong:
+2026-06-05T10:43:27.7672619Z Execution failed for task ':app:compileDebugJavaWithJavac'.
+2026-06-05T10:43:27.7695829Z > Compilation failed; see the compiler error output for details.
+2026-06-05T10:43:27.7705507Z 
+2026-06-05T10:43:27.7714799Z * Try:
+2026-06-05T10:43:27.7735700Z > Run with --info option to get more log output.
+2026-06-05T10:43:27.7754315Z > Run with --scan to get full insights.
+2026-06-05T10:43:27.7755200Z 
+2026-06-05T10:43:27.7757462Z BUILD FAILED in 30s
+2026-06-05T10:43:28.2587190Z ##[error]Process completed with exit code 1.
+2026-06-05T10:43:28.2911960Z Post job cleanup.
+2026-06-05T10:43:28.6705533Z In post-action step
+2026-06-05T10:43:28.6718644Z ##[group]Stopping Gradle daemons
+2026-06-05T10:43:28.6719996Z Stopping Gradle daemons for /home/runner/work/_temp/.gradle-actions/gradle-installations/installs/gradle-8.7
+2026-06-05T10:43:28.6740669Z [command]/home/runner/work/_temp/.gradle-actions/gradle-installations/installs/gradle-8.7/bin/gradle --stop
+2026-06-05T10:43:29.9894114Z Stopping Daemon(s)
+2026-06-05T10:43:29.9895614Z 1 Daemon stopped
+2026-06-05T10:43:29.9980104Z ##[endgroup]
+2026-06-05T10:43:29.9981443Z Not performing cache-cleanup due to build failure
+2026-06-05T10:43:29.9982927Z ##[group]Caching Gradle state
+2026-06-05T10:43:31.1036062Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/accessibilitroller/accessibilitroller --files-from manifest.txt --use-compress-program zstdmt
+2026-06-05T10:43:31.3896056Z Sent 1853410 of 1853410 (100.0%), 20.8 MBs/sec
+2026-06-05T10:43:31.4765933Z Saved cache entry with key gradle-home-v1|Linux-X64|build[ddef187d23c5c0a012a82b60c8f7590e]-ef987c1f5dd62c533cea2f71d8d12fc706adc913 from /home/runner/.gradle/caches,/home/runner/.gradle/notifications,/home/runner/.gradle/.setup-gradle in 389ms
+2026-06-05T10:43:31.4768693Z ##[endgroup]
+2026-06-05T10:43:31.4773927Z Generating Job Summary
+2026-06-05T10:43:31.4789465Z Completed post-action step
+2026-06-05T10:43:31.4977088Z Post job cleanup.
+2026-06-05T10:43:31.7057394Z Post job cleanup.
+2026-06-05T10:43:31.8468709Z [command]/usr/bin/git version
+2026-06-05T10:43:31.8511135Z git version 2.54.0
+2026-06-05T10:43:31.8561040Z Temporarily overriding HOME='/home/runner/work/_temp/6ce9f5cc-ee47-4778-8a12-3161b261fc51' before making global git config changes
+2026-06-05T10:43:31.8563006Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-05T10:43:31.8569090Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/accessibilitroller/accessibilitroller
+2026-06-05T10:43:31.8619724Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-05T10:43:31.8658900Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-05T10:43:31.8903124Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-05T10:43:31.8930998Z http.https://github.com/.extraheader
+2026-06-05T10:43:31.8947821Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-06-05T10:43:31.8982935Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-05T10:43:31.9219556Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-05T10:43:31.9253562Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-05T10:43:31.9691226Z Cleaning up orphan processes
+2026-06-05T10:43:31.9933633Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/cache@v4, actions/checkout@v4, actions/setup-java@v4, gradle/actions/setup-gradle@v4. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

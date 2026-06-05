@@ -19,6 +19,7 @@ public class SettingsManager {
     public static final String KEY_BUTTON_COLOR         = "button_color";
     public static final String KEY_SPEAK_AUTO_DISABLE   = "speak_auto_disable";
     public static final String KEY_HIGHLIGHT_ENABLED     = "highlight_enabled";
+    public static final String KEY_READ_BACKGROUNDS      = "read_backgrounds";
 
     public static final int DEFAULT_BUTTON_COLOR = 0xFF6200EE;
 
@@ -108,6 +109,14 @@ public class SettingsManager {
 
     public void setHighlightEnabled(boolean value) {
         prefs.edit().putBoolean(KEY_HIGHLIGHT_ENABLED, value).apply();
+    }
+
+    public boolean getReadBackgrounds() {
+        return prefs.getBoolean(KEY_READ_BACKGROUNDS, false);
+    }
+
+    public void setReadBackgrounds(boolean value) {
+        prefs.edit().putBoolean(KEY_READ_BACKGROUNDS, value).apply();
     }
 
     public void registerListener(OnSharedPreferenceChangeListener listener) {

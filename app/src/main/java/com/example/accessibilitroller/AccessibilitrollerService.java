@@ -35,6 +35,14 @@ public class AccessibilitrollerService extends AccessibilityService {
     private final Handler highlightHandler = new Handler(Looper.getMainLooper());
     private final Runnable hideHighlight = this::removeHighlight;
 
+    private final Handler raiseHandler = new Handler(Looper.getMainLooper());
+    private final Runnable raiseBroadcast = new Runnable() {
+        @Override public void run() {
+            LocalBroadcastManager.getInstance(AccessibilitrollerService.this)
+                    .sendBroadcast(new Intent(FloatingButtonService.ACTION_RAISE_BUTTON));
+        }
+    };
+
     private final SharedPreferences.OnSharedPreferenceChangeListener engineListener =
             (prefs, key) -> {
                 if (SettingsManager.KEY_TTS_ENGINE.equals(key)) reinitTts();
@@ -72,7 +80,12 @@ public class AccessibilitrollerService extends AccessibilityService {
     }
 
     @Override
-    public void onAccessibilityEvent(AccessibilityEvent event) {}
+    public void onAccessibilityEvent(AccessibilityEvent event) {
+        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            raiseHandler.removeCallbacks(raiseBroadcast);
+            raiseHandler.postDelayed(raiseBroadcast, 300);
+        }
+    }
 
     @Override
     public void onInterrupt() {}
@@ -81,6 +94,7 @@ public class AccessibilitrollerService extends AccessibilityService {
     public void onDestroy() {
         SettingsManager.getInstance(this).unregisterListener(engineListener);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(speakReceiver);
+        raiseHandler.removeCallbacksAndMessages(null);
         highlightHandler.removeCallbacksAndMessages(null);
         removeHighlight();
         shutdownTts();
@@ -132,12 +146,37 @@ public class AccessibilitrollerService extends AccessibilityService {
     private void speakNodeAtCoordinates(int x, int y) {
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) return;
-        AccessibilityNodeInfo target = findDeepestNodeAt(root, x, y);
+        SettingsManager sm = SettingsManager.getInstance(this);
+        AccessibilityNodeInfo target = sm.getReadBackgrounds()
+                ? findDeepestNodeAt(root, x, y)
+                : findMeaningfulNodeAt(root, x, y);
         if (target != null) {
             speakNode(target);
         } else {
             root.recycle();
         }
+    }
+
+    private AccessibilityNodeInfo findMeaningfulNodeAt(AccessibilityNodeInfo node, int x, int y) {
+        Rect rect = new Rect();
+        node.getBoundsInScreen(rect);
+        if (!rect.contains(x, y)) { node.recycle(); return null; }
+        for (int i = node.getChildCount() - 1; i >= 0; i--) {
+            AccessibilityNodeInfo child = node.getChild(i);
+            if (child == null) continue;
+            AccessibilityNodeInfo result = findMeaningfulNodeAt(child, x, y);
+            if (result != null) { node.recycle(); return result; }
+        }
+        if (hasMeaningfulContent(node)) return node;
+        node.recycle();
+        return null;
+    }
+
+    private boolean hasMeaningfulContent(AccessibilityNodeInfo node) {
+        return (node.getContentDescription() != null && node.getContentDescription().length() > 0)
+                || (node.getText() != null && node.getText().length() > 0)
+                || node.isClickable()
+                || node.isLongClickable();
     }
 
     private void speakNode(AccessibilityNodeInfo node) {

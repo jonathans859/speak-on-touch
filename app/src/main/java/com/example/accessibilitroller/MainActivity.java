@@ -19,7 +19,8 @@ import android.widget.Spinner;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import java.util.ArrayList;
@@ -36,8 +37,8 @@ public class MainActivity extends AppCompatActivity {
     private View btnAccessibilityGrant;
     private View btnNotificationGrant;
 
-    private CardView cardCircle;
-    private CardView cardSemiCircle;
+    private MaterialCardView cardCircle;
+    private MaterialCardView cardSemiCircle;
 
     private Spinner spinnerSingle;
     private Spinner spinnerDouble;
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spinnerTtsVoice;
     private SwitchMaterial switchSpeakAutoDisable;
     private SwitchMaterial switchHighlight;
+    private SwitchMaterial switchReadBackgrounds;
     private String[] ttsVoiceKeys;
 
     private static final int[] BUTTON_COLORS = {
@@ -160,15 +162,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void highlightStyleCard(String style) {
-        float selected = getResources().getDimension(R.dimen.card_selected_elevation);
-        float normal = getResources().getDimension(R.dimen.card_normal_elevation);
-        if (SettingsManager.STYLE_CIRCLE.equals(style)) {
-            cardCircle.setCardElevation(selected);
-            cardSemiCircle.setCardElevation(normal);
-        } else {
-            cardCircle.setCardElevation(normal);
-            cardSemiCircle.setCardElevation(selected);
-        }
+        applyCardSelection(cardCircle,     SettingsManager.STYLE_CIRCLE.equals(style),
+                getString(R.string.style_circle));
+        applyCardSelection(cardSemiCircle, SettingsManager.STYLE_SEMICIRCLE.equals(style),
+                getString(R.string.style_semicircle));
+    }
+
+    private void applyCardSelection(MaterialCardView card, boolean selected, String label) {
+        float selElev = getResources().getDimension(R.dimen.card_selected_elevation);
+        float normElev = getResources().getDimension(R.dimen.card_normal_elevation);
+        card.setCardElevation(selected ? selElev : normElev);
+        card.setStrokeWidth(selected ? dpToPx(2) : 0);
+        card.setStrokeColor(selected
+                ? ContextCompat.getColor(this, R.color.colorPrimary)
+                : android.graphics.Color.TRANSPARENT);
+        card.setContentDescription(selected
+                ? label + ", " + getString(R.string.selected)
+                : label);
     }
 
     // ── Button colour ─────────────────────────────────────────────────────────
@@ -244,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
 
         setupSpinner(spinnerSingle,     standardLabels, standardKeys, SettingsManager.KEY_GESTURE_SINGLE);
         setupSpinner(spinnerDouble,     standardLabels, standardKeys, SettingsManager.KEY_GESTURE_DOUBLE);
-        setupSpinner(spinnerHold,       standardLabels, standardKeys, SettingsManager.KEY_GESTURE_HOLD);
+        setupSpinner(spinnerHold,       allLabels,      allKeys,      SettingsManager.KEY_GESTURE_HOLD);
         setupSpinner(spinnerDoubleHold, allLabels,      allKeys,      SettingsManager.KEY_GESTURE_DOUBLE_HOLD);
     }
 
@@ -288,6 +298,11 @@ public class MainActivity extends AppCompatActivity {
         switchHighlight.setChecked(settings.getHighlightEnabled());
         switchHighlight.setOnCheckedChangeListener((btn, checked) ->
                 settings.setHighlightEnabled(checked));
+
+        switchReadBackgrounds = findViewById(R.id.switch_read_backgrounds);
+        switchReadBackgrounds.setChecked(settings.getReadBackgrounds());
+        switchReadBackgrounds.setOnCheckedChangeListener((btn, checked) ->
+                settings.setReadBackgrounds(checked));
 
         populateTtsEngines();
     }
