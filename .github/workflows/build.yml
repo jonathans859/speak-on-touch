@@ -28,6 +28,6 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: accessibilitroller-debug
+          name: speak-on-touch-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30

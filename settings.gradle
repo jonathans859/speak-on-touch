@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "Accessibilitroller"
+rootProject.name = "SpeakOnTouch"
 include ':app'

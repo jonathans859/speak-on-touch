@@ -1,7 +1,7 @@
-# Accessibilitroller — Project Reference
+# Speak on Touch — Project Reference
 
 ## What this is
-A pure-Java Android app (min SDK 26, target SDK 35) providing a floating overlay button that reads UI elements aloud using Android's AccessibilityService + TextToSpeech APIs. Inspired by the iOS Zoom Controller.
+A pure-Java Android app (min SDK 26, target SDK 35), formerly "Accessibilitroller". While its AccessibilityService is enabled, a full-screen touch layer reads aloud whatever the user touches or drags over, using AccessibilityService + TextToSpeech. There is **no in-app floating button** — speak mode is switched on and off purely by enabling/disabling the service (accessibility shortcut, accessibility button, volume-key shortcut, or Settings).
 
 ---
 
@@ -9,7 +9,8 @@ A pure-Java Android app (min SDK 26, target SDK 35) providing a floating overlay
 
 | Field | Value |
 |---|---|
-| Namespace / Application ID | `com.jonathan859.accessibilitroller` |
+| Namespace / Application ID | `com.jonathan859.speakontouch` (was `com.jonathan859.accessibilitroller` — installs as a separate app) |
+| Display name | `Speak on Touch` |
 | AGP | 8.6.0 |
 | Gradle | 8.7 (no wrapper JAR — CI uses `gradle/actions/setup-gradle@v4`) |
 | compileSdk / targetSdk | 35 |
@@ -33,43 +34,31 @@ No release keystore exists — debug only.
 
 ## Architecture
 
-### Services
-- **`FloatingButtonService`** — foreground service (`foregroundServiceType="specialUse"`). Manages the overlay button, gesture state machine, speak mode, drag mode, and vibration.
-- **`AccessibilitrollerService`** — `AccessibilityService`. Owns TTS. Receives `ACTION_SPEAK_AT` broadcasts with `x`/`y` coordinates and performs coordinate-based hit-testing across all windows to find and speak the target UI node.
+### Single service
+- **`SpeakOnTouchService`** — `AccessibilityService`. Owns TTS, the touch layer, hit-testing and the highlight overlay. No IPC, no foreground service, no notification.
 
-### IPC
-`LocalBroadcastManager` sends `ACTION_SPEAK_AT` (+ `EXTRA_X`, `EXTRA_Y`) from `FloatingButtonService` → `AccessibilitrollerService`.
+Lifecycle:
+- `onServiceConnected()` → init TTS, add touch layer (`TYPE_ACCESSIBILITY_OVERLAY`, full screen, `FLAG_NOT_FOCUSABLE | FLAG_LAYOUT_IN_SCREEN`), vibrate `(20, 80)`.
+- `onDestroy()` → remove touch layer + highlight, vibrate `(15, 60)`, shut down TTS.
+- The service does **not** set `flagRequestAccessibilityButton`, so on Android 12+ the accessibility shortcut simply toggles the service on/off — that *is* the on/off switch for speak mode.
 
 ### Settings
-`SettingsManager` — singleton `SharedPreferences` wrapper. Keys:
-- `button_style` — `"circle"` | `"semicircle"`
-- `gesture_single` / `gesture_double` / `gesture_hold` / `gesture_double_hold`
-- `button_pos_x` / `button_pos_y` — float 0–1 relative to screen
+`SettingsManager` — singleton `SharedPreferences` wrapper. File name `speakontouch_prefs`. Keys:
 - `tts_engine` — TTS engine package name (empty = system default)
-- `button_color` — int ARGB (default `0xFF6200EE`)
 - `speak_auto_disable` — boolean (default false)
 - `highlight_enabled` — boolean (default false)
 - `read_backgrounds` — boolean (default false)
+- `focus_whole_item` — boolean (default false)
 
-Action constants: `speak_on_touch`, `enable_drag`, `none`.
+### MainActivity
+Service status card (on/off + "Open settings" → `ACTION_ACCESSIBILITY_SETTINGS`), how-to text, TTS engine spinner, four switches.
 
 ---
 
 ## Critical implementation details
 
-### Overlay window type — TYPE_ACCESSIBILITY_OVERLAY via static proxy
-The floating button must use **`TYPE_ACCESSIBILITY_OVERLAY`** to stay above the notification shade and quick-settings panel. `TYPE_APPLICATION_OVERLAY` windows sit below Android system UI.
-
-**Problem:** `TYPE_ACCESSIBILITY_OVERLAY` can only be used from an `AccessibilityService` process. Calling `windowManager.addView(..., TYPE_ACCESSIBILITY_OVERLAY)` from `FloatingButtonService` throws `BadTokenException`.
-
-**Solution:** Static proxy pattern in `AccessibilitrollerService`:
-- `private static AccessibilitrollerService instance` — set in `onServiceConnected()`, cleared in `onDestroy()`
-- `static boolean isAvailable()` — null check
-- `static void addOverlayView(View v, WindowManager.LayoutParams lp)` — sets `lp.type = TYPE_ACCESSIBILITY_OVERLAY` and calls `instance.windowManager.addView()`
-
-`FloatingButtonService` has three private helpers `wAddView()` / `wRemoveView()` / `wUpdateViewLayout()` that delegate to the static methods when the service is available, falling back to `TYPE_APPLICATION_OVERLAY` otherwise.
-
-`WindowManagerGlobal` is a per-process singleton, so `removeView()` and `updateViewLayout()` can be called from any `WindowManager` instance regardless of which one did the `addView()`.
+### Touch layer ignores itself in hit-testing
+`getWindows()` returns our own `TYPE_ACCESSIBILITY_OVERLAY` windows (touch layer, highlight). Phase 1 skips `AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY` windows — otherwise "read backgrounds" mode would hit the touch layer's root view. Both overlay views also set `IMPORTANT_FOR_ACCESSIBILITY_NO`.
 
 ### Multi-window hit-testing (status bar access)
 `getRootInActiveWindow()` only returns the foreground app — it cannot see the status bar or nav bar.
@@ -78,19 +67,24 @@ Use `getWindows()` instead, which returns all `AccessibilityWindowInfo` objects 
 
 **Two-phase search in `speakNodeAtCoordinates()`:**
 1. Exact hit-test across all windows (front-to-back order)
-2. If miss: nearest-node snap (`findNearestMeaningfulNode`) restricted to `TYPE_SYSTEM` windows with a 28dp radius — uses Euclidean distance from touch point to node bounds edge (`distToRect()`). This makes tiny status bar icons reachable without pixel-perfect accuracy.
+2. If miss: nearest-node snap (`findNearestMeaningfulNode`) restricted to `TYPE_SYSTEM` windows with a 28dp radius — uses Euclidean distance from touch point to node bounds edge (`distToRect()`).
 
-### Speak debounce
-`SPEAK_DEBOUNCE_MS = 0` — no throttle on `ACTION_MOVE` events. Safe because `speakNode()` deduplicates by `lastSpokenText`; TTS only fires when a new element is entered. The accessibility tree traversal is fast (in-memory cache).
+### Focus whole item (TalkBack-style grouping)
+When `focus_whole_item` is on, after hit-testing:
+- `promoteToFocusableItem()` walks `getParent()` up from the touched node to the nearest **focusable item**: `isClickable() || isLongClickable() || isScreenReaderFocusable()` (API 28+). Stops at a scrollable ancestor and never picks the window root (no parent) — so a list or entire screen is never one item. Falls back to the touched node.
+- `collectGroupText()` builds the utterance: the item's content description if it has one (replaces subtree), otherwise text of descendants in order, joined with ", ". Skips invisible descendants and descendants that are themselves focusable items (e.g. an avatar button inside a chat row). Non-clickable checkables inside the row contribute "checked"/"unchecked".
+- Highlight uses the item's bounds, so the border surrounds the whole row.
+- `isCheckable()` deliberately does **not** make a node an item: a non-clickable switch inside a clickable Settings row belongs to the row.
+
+### Speak debounce / no-repeat TTS
+No throttle on `ACTION_MOVE`. `speakNode()` deduplicates by `lastSpokenText`; resets after a >3 s gap between touches (`SESSION_RESET_MS = 3000`).
+
+### Auto-disable on finger lift
+On `ACTION_UP`/`ACTION_CANCEL` with `speak_auto_disable` set: remove touch layer immediately, vibrate, then poll `tts.isSpeaking()` (first check after 150 ms) and call `disableSelf()` once speech finishes — TTS is shut down in `onDestroy()`, so disabling immediately would cut off the last utterance. `disabling` flag prevents repeats.
 
 ### Accessibility service detection
 Use `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES` + `TextUtils.SimpleStringSplitter(':')` + `ComponentName.unflattenFromString()`.  
 **Do not** use `AccessibilityManager.getEnabledAccessibilityServiceList()` — unreliable on many ROMs.
-
-### Button size
-Always pass **explicit px dimensions** to `WindowManager.LayoutParams` (not `WRAP_CONTENT`).  
-`WRAP_CONTENT` on a plain `View` with no intrinsic size expands to fill the screen.  
-Circle button: `dpToPx(56)` × `dpToPx(56)`. Semicircle: `dpToPx(28)` × `dpToPx(56)`.
 
 ### Touch exploration mode — DO NOT USE
 `flagRequestTouchExplorationMode` / `canRequestTouchExplorationMode` must **not** appear in `accessibility_service_config.xml`.  
@@ -100,130 +94,67 @@ This flag puts the entire system into TalkBack explore-by-touch mode, replacing 
 ```xml
 android:accessibilityFlags="flagReportViewIds|flagRetrieveInteractiveWindows"
 ```
-No hover events. No touch exploration.
+No hover events. No touch exploration. No `flagRequestAccessibilityButton` (see Lifecycle).
 
 ### Dark mode
-`themes.xml` must **not** override `colorBackground`, `colorSurface`, or `android:colorBackground`.  
+`themes.xml` (`Theme.SpeakOnTouch`) must **not** override `colorBackground`, `colorSurface`, or `android:colorBackground`.  
 Use `Theme.Material3.DayNight.NoActionBar` and let it handle surface colours.
 
-### Speak mode z-order
-Speak overlay is added first (`wAddView(speakOverlay, …)`), then button is removed and re-added so it sits on top. Both happen before the next Choreographer frame — no visible flicker.
+### Checkbox / checkable state reading
+Appends ", checked" / ", unchecked" for checkable nodes (both modes).
 
-### No-repeat TTS
-`AccessibilitrollerService.speakNode()` tracks `lastSpokenText`. Skips the TTS call if the text is identical. Resets after a >3 s gap between broadcasts (`SESSION_RESET_MS = 3000`) so re-activating speak mode always starts fresh.
-
-### Speak mode auto-disable
-`onSpeakTouch()` checks `settings.getSpeakAutoDisable()` on `ACTION_UP` / `ACTION_CANCEL` and calls `deactivateSpeakMode()` if set.
-
-### TalkBack support on the floating button
-- `setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES)`
-- `setClickable(true)`
-- `AccessibilityDelegateCompat` sets class name to `android.widget.Button`
-- `setContentDescription()` — dynamic: "Double-tap to start speak mode" / "Speak mode active. Double-tap to stop."
-- `setOnClickListener` handles TalkBack double-tap
-
-### Button colour
-`GradientDrawable` (shape `OVAL`) set on circle button via `btn.setBackground(bg)`.  
-`SemiCircleButtonView.setColor(int)` passes colour into the custom view.  
-Persisted as `int` ARGB in `SettingsManager.KEY_BUTTON_COLOR`.  
-Live updates via `SharedPreferences.OnSharedPreferenceChangeListener` in `FloatingButtonService` (watches `KEY_BUTTON_COLOR` and `KEY_BUTTON_STYLE`).
+### Highlight overlay
+Optional yellow border overlay drawn via `GradientDrawable` in `showHighlight()`. `TYPE_ACCESSIBILITY_OVERLAY`, `FLAG_NOT_TOUCHABLE`. Auto-hides after 1500ms.
 
 ### TTS engine picker
 `populateTtsEngines()` uses `PackageManager.queryIntentServices("android.intent.action.TTS_SERVICE")` — more comprehensive than `TextToSpeech.getEngines()` on many devices.  
 Requires `<queries>` block in `AndroidManifest.xml` for Android 11+ package visibility.  
 Engine change triggers `reinitTts()` via `SharedPreferences.OnSharedPreferenceChangeListener`.
 
-### Style card selection (MainActivity)
-`MaterialCardView` (not plain `CardView`) — required for `setStrokeWidth()` / `setStrokeColor()` selection indicator.  
-`applyCardSelection()` sets stroke + content description ("Circle, selected" / "Semi-circle").
-
-### Checkbox / checkable state reading
-`speakNode()` appends `", checked"` or `", unchecked"` for nodes where `node.isCheckable()` is true.
-
-### Highlight overlay
-Optional yellow border overlay drawn via `GradientDrawable` in `AccessibilitrollerService.showHighlight()`.  
-Uses `TYPE_ACCESSIBILITY_OVERLAY` (inside the service, so allowed).  
-Auto-hides after 1500ms via `Handler.postDelayed`.
-
-### Gesture state machine
-`FloatingButtonService` states: `IDLE → FIRST_DOWN → FIRST_WAITING → SECOND_DOWN`  
-`needsDoubleTapWindow()` — if neither double-press nor double-hold is configured, single press fires immediately on finger lift (no 200ms wait window). `SINGLE_PRESS_TIMEOUT_MS = 200`.
-
-### Window-raise anti-pattern — DO NOT use `TYPE_WINDOW_STATE_CHANGED`
-Raising the button to foreground by listening to `AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED` and removing/re-adding the button window causes:
-- Constant button flashing (event fires on every focus change, keyboard event, etc.)
-- Repeated "drawing over other apps" system notification on every re-add
-The `TYPE_ACCESSIBILITY_OVERLAY` approach makes this unnecessary.
-
 ### CI
 `.github/workflows/build.yml` uses:
 - `gradle/actions/setup-gradle@v4` with `gradle-version: '8.7'`
 - `gradle assembleDebug` (not `./gradlew` — no wrapper JAR committed)
-- Artifact upload: `app/build/outputs/apk/debug/app-debug.apk`
-- No keystore cache step — keystore is committed to the repo at `keystore/debug.keystore`
+- Artifact `speak-on-touch-debug`: `app/build/outputs/apk/debug/app-debug.apk`
 
 ---
 
 ## File map
 
-Java sources live under `app/src/main/java/com/jonathan859/accessibilitroller/`.
+Java sources live under `app/src/main/java/com/jonathan859/speakontouch/`.
 
 | File | Purpose |
 |---|---|
-| `app/src/main/java/…/MainActivity.java` | Settings UI: permissions, style cards, colour swatches, gesture spinners, TTS engine spinner, auto-disable/highlight/read-backgrounds switches, service toggle |
-| `app/src/main/java/…/FloatingButtonService.java` | Overlay button, gesture state machine, speak mode, drag mode; `wAddView/wRemoveView/wUpdateViewLayout` helpers |
-| `app/src/main/java/…/AccessibilitrollerService.java` | AccessibilityService, TTS ownership, multi-window hit-testing, nearest-node snap, highlight overlay; static proxy (`instance`, `addOverlayView`) |
-| `app/src/main/java/…/SettingsManager.java` | SharedPreferences singleton |
-| `app/src/main/java/…/PermissionHelper.java` | Overlay / accessibility / notification permission checks |
-| `app/src/main/java/…/SemiCircleButtonView.java` | Custom View: half-circle via `canvas.drawArc()`, 28dp × 56dp |
+| `…/MainActivity.java` | Settings UI: service status, TTS engine spinner, focus-whole-item / auto-disable / highlight / read-backgrounds switches |
+| `…/SpeakOnTouchService.java` | AccessibilityService: touch layer, TTS, multi-window hit-testing, nearest-node snap, whole-item grouping, highlight overlay |
+| `…/SettingsManager.java` | SharedPreferences singleton |
+| `…/PermissionHelper.java` | Accessibility-service-enabled check |
 | `app/src/main/res/xml/accessibility_service_config.xml` | Service flags (no touch exploration) |
 | `app/src/main/res/values/themes.xml` | Brand colours only — no surface overrides |
 | `app/src/main/res/layout/activity_main.xml` | Main screen layout |
 | `app/build.gradle` | AGP config + explicit debug signing |
-| `gradle.properties` | AndroidX flag, Jetifier, JVM args |
-| `.github/workflows/build.yml` | CI build + keystore caching |
+| `.github/workflows/build.yml` | CI build |
 
 ---
 
-## Current status (as of commit `6baaaed`)
-
-All known issues resolved. Features implemented and tested:
-
-1. **Button stays above system UI** — `TYPE_ACCESSIBILITY_OVERLAY` via static proxy; survives notification shade pull-down
-2. **Status bar reading** — `getWindows()` multi-window search; nearest-node snap for tiny icons (28dp radius, system windows only)
-3. **Instant explore-by-touch** — `SPEAK_DEBOUNCE_MS = 0`; TTS dedup prevents noise
-4. **Live settings** — colour and style update without service restart via `OnSharedPreferenceChangeListener`
-5. **TTS engine picker** — `PackageManager.queryIntentServices` enumerates all engines; live reinit on change
-6. **Highlight overlay** — optional yellow border around focused element (1.5 s auto-hide)
-7. **Checkbox state** — appends ", checked" / ", unchecked" to node text
-8. **Read backgrounds switch** — toggle between meaningful-content-only and full deepest-node traversal
-9. **Style cards** — MaterialCardView stroke selection indicator; TalkBack-labelled
-10. **Hold gesture → drag** — `enable_drag` available on hold and double-hold spinners
-11. **Instant single press** — no double-tap window when double gestures set to "None"
-12. **Softer vibration** — `VibrationEffect.createOneShot(20, 80)` / `(15, 60)`
-
-No pending tasks.
-
-Additional changes since previous status entry:
-- **Application ID renamed** to `com.jonathan859.accessibilitroller` (namespace, applicationId, all Java package declarations, ACTION_SPEAK_AT string, accessibility_service_config.xml, source tree moved from `com/example/` to `com/jonathan859/`)
-- **Debug keystore committed** to `keystore/debug.keystore` — eliminates 7-day CI cache eviction reinstall requirement
+## History
+- Up to `850d392`: app drew its own floating button (`FloatingButtonService`, circle/semicircle styles, colours, gesture state machine, drag mode, static `TYPE_ACCESSIBILITY_OVERLAY` proxy). All removed when the app became Speak on Touch; see git history if any of it is needed again.
+- Renamed to Speak on Touch: application ID `com.jonathan859.accessibilitroller` → `com.jonathan859.speakontouch`, service class `AccessibilitrollerService` → `SpeakOnTouchService`. New install; the old app must be uninstalled separately and settings start from defaults.
 
 ---
 
 ## Known gotchas / lessons learned
 
-- `WRAP_CONTENT` in `WindowManager.LayoutParams` on a view with no intrinsic size = full-screen button.
-- `TYPE_ACCESSIBILITY_OVERLAY` outside an `AccessibilityService` process = crash (`BadTokenException`). Use the static proxy pattern.
-- `TYPE_APPLICATION_OVERLAY` sits below the notification shade — button disappears when shade is pulled down.
-- `WindowManagerGlobal` is a per-process singleton: `removeView()` / `updateViewLayout()` work from any `WindowManager` instance regardless of which one did `addView()`.
-- `TYPE_WINDOW_STATE_CHANGED` fires on virtually every UI interaction (focus changes, keyboard events) — never use it to re-raise a window, it causes constant flashing and repeated system notifications.
-- `getRootInActiveWindow()` cannot see the status bar — use `getWindows()` and check `AccessibilityWindowInfo.TYPE_SYSTEM` for system UI.
+- `TYPE_ACCESSIBILITY_OVERLAY` can only be added from inside the `AccessibilityService` (else `BadTokenException`).
+- `TYPE_APPLICATION_OVERLAY` sits below the notification shade.
+- `WRAP_CONTENT` in `WindowManager.LayoutParams` on a view with no intrinsic size = full-screen window.
+- `TYPE_WINDOW_STATE_CHANGED` fires on virtually every UI interaction — never use it to re-raise a window.
+- `getRootInActiveWindow()` cannot see the status bar — use `getWindows()` and check `AccessibilityWindowInfo.TYPE_SYSTEM`.
+- `getWindows()` includes the service's own overlay windows — skip `TYPE_ACCESSIBILITY_OVERLAY`.
 - `flagRequestTouchExplorationMode` = entire system switches to TalkBack gesture mode.
 - `AccessibilityManager.getEnabledAccessibilityServiceList()` unreliable — always use `Settings.Secure`.
-- `TextToSpeech.getEngines()` misses some installed engines — use `PackageManager.queryIntentServices("android.intent.action.TTS_SERVICE")` instead.
-- `CardView` does not support stroke — must use `MaterialCardView` for selection indicators.
+- `TextToSpeech.getEngines()` misses some installed engines — use `PackageManager.queryIntentServices`.
 - Hardcoding `colorBackground`/`colorSurface` in `themes.xml` breaks dark mode.
-- `GradientDrawable` is in `android.graphics.drawable`, not `android.graphics`.
-- GitHub Actions cache evicts after 7 days of inactivity — do not use cache for the keystore. Commit it to the repo instead (debug keystores have no monetary value).
+- GitHub Actions cache evicts after 7 days — keystore is committed instead.
 - No `gradle-wrapper.jar` in repo — use `gradle/actions/setup-gradle` with explicit version.
 - `<queries>` block required in `AndroidManifest.xml` for `PackageManager.queryIntentServices` on Android 11+.
