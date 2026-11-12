@@ -2,9 +2,9 @@
 <resources>
     <string name="app_name">Speak on Touch</string>
     <string name="accessibility_service_label">Speak on Touch</string>
-    <string name="accessibility_service_description">While on, reads aloud whatever you touch or drag your finger over. Turn it on and off with the accessibility shortcut. Normal touch input is paused while it is on.</string>
+    <string name="accessibility_service_description">Press the accessibility button or shortcut to start speak mode, then touch or drag across the screen to hear items. Press it again to stop. Normal touch input is paused only while speak mode is on.</string>
 
-    <string name="how_to_use">Turn Speak on Touch on with the accessibility shortcut (accessibility button or volume keys) or from Accessibility settings. While it is on, touch or drag across the screen to hear items. Turn it off the same way.</string>
+    <string name="how_to_use">Turn on the Speak on Touch accessibility service and assign it to the accessibility button or shortcut. The service does nothing by itself: press the button or shortcut to start speak mode, touch or drag across the screen to hear items, and press it again to stop.</string>
 
     <string name="service_status_on">Accessibility service is on</string>
     <string name="service_status_off">Accessibility service is off</string>
@@ -16,7 +16,7 @@
 
     <string name="section_behaviour">Behaviour</string>
     <string name="focus_whole_item_label">Focus whole item, like TalkBack (e.g. read an entire chat row instead of just its name)</string>
-    <string name="speak_auto_disable_label">Turn off when finger lifts</string>
+    <string name="speak_auto_disable_label">Stop speak mode when finger lifts</string>
     <string name="highlight_enabled_label">Highlight focused element</string>
     <string name="read_backgrounds_label">Read background elements</string>
 </resources>

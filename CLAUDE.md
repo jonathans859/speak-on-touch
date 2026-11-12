@@ -1,7 +1,7 @@
 # Speak on Touch — Project Reference
 
 ## What this is
-A pure-Java Android app (min SDK 26, target SDK 35), formerly "Accessibilitroller". While its AccessibilityService is enabled, a full-screen touch layer reads aloud whatever the user touches or drags over, using AccessibilityService + TextToSpeech. There is **no in-app floating button** — speak mode is switched on and off purely by enabling/disabling the service (accessibility shortcut, accessibility button, volume-key shortcut, or Settings).
+A pure-Java Android app (min SDK 26, target SDK 35), formerly "Accessibilitroller". The AccessibilityService runs idle in the background; each press of the system accessibility button / shortcut toggles **speak mode**, a full-screen touch layer that reads aloud whatever the user touches or drags over (AccessibilityService + TextToSpeech). There is **no in-app floating button**.
 
 ---
 
@@ -38,9 +38,11 @@ No release keystore exists — debug only.
 - **`SpeakOnTouchService`** — `AccessibilityService`. Owns TTS, the touch layer, hit-testing and the highlight overlay. No IPC, no foreground service, no notification.
 
 Lifecycle:
-- `onServiceConnected()` → init TTS, add touch layer (`TYPE_ACCESSIBILITY_OVERLAY`, full screen, `FLAG_NOT_FOCUSABLE | FLAG_LAYOUT_IN_SCREEN`), vibrate `(20, 80)`.
-- `onDestroy()` → remove touch layer + highlight, vibrate `(15, 60)`, shut down TTS.
-- The service does **not** set `flagRequestAccessibilityButton`, so on Android 12+ the accessibility shortcut simply toggles the service on/off — that *is* the on/off switch for speak mode.
+- `onServiceConnected()` → init TTS, `getAccessibilityButtonController().registerAccessibilityButtonCallback()`. **No touch layer yet** — the device stays fully usable.
+- `onClicked()` → `toggleSpeakMode()`: `startSpeakMode()` adds the touch layer (`TYPE_ACCESSIBILITY_OVERLAY`, full screen, `FLAG_NOT_FOCUSABLE | FLAG_LAYOUT_IN_SCREEN`) + vibrate `(20, 80)`; `stopSpeakMode()` removes it + vibrate `(15, 60)`.
+- `onDestroy()` → unregister callback, remove touch layer + highlight, shut down TTS.
+- Requires `flagRequestAccessibilityButton`. On Android 11+ the volume-key shortcut then enables the service if it's off, and once it's on sends `onClicked` instead of toggling the service. Software button / gesture / floating menu always send `onClicked`.
+- **Anti-pattern (beta 1):** adding the touch layer in `onServiceConnected()` = device unusable whenever the service is on.
 
 ### Settings
 `SettingsManager` — singleton `SharedPreferences` wrapper. File name `speakontouch_prefs`. Keys:
@@ -79,8 +81,8 @@ When `focus_whole_item` is on, after hit-testing:
 ### Speak debounce / no-repeat TTS
 No throttle on `ACTION_MOVE`. `speakNode()` deduplicates by `lastSpokenText`; resets after a >3 s gap between touches (`SESSION_RESET_MS = 3000`).
 
-### Auto-disable on finger lift
-On `ACTION_UP`/`ACTION_CANCEL` with `speak_auto_disable` set: remove touch layer immediately, vibrate, then poll `tts.isSpeaking()` (first check after 150 ms) and call `disableSelf()` once speech finishes — TTS is shut down in `onDestroy()`, so disabling immediately would cut off the last utterance. `disabling` flag prevents repeats.
+### Auto-stop on finger lift
+On `ACTION_UP`/`ACTION_CANCEL` with `speak_auto_disable` set: `stopSpeakMode()` (removes the touch layer only; service and TTS stay alive, so the last utterance finishes).
 
 ### Accessibility service detection
 Use `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES` + `TextUtils.SimpleStringSplitter(':')` + `ComponentName.unflattenFromString()`.  
@@ -92,9 +94,9 @@ This flag puts the entire system into TalkBack explore-by-touch mode, replacing 
 
 ### Accessibility service config
 ```xml
-android:accessibilityFlags="flagReportViewIds|flagRetrieveInteractiveWindows"
+android:accessibilityFlags="flagReportViewIds|flagRetrieveInteractiveWindows|flagRequestAccessibilityButton"
 ```
-No hover events. No touch exploration. No `flagRequestAccessibilityButton` (see Lifecycle).
+No hover events. No touch exploration. `flagRequestAccessibilityButton` is required (see Lifecycle).
 
 ### Dark mode
 `themes.xml` (`Theme.SpeakOnTouch`) must **not** override `colorBackground`, `colorSurface`, or `android:colorBackground`.  

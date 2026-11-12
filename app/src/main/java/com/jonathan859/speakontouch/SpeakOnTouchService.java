@@ -1,5 +1,6 @@
 package com.jonathan859.speakontouch;
 
+import android.accessibilityservice.AccessibilityButtonController;
 import android.accessibilityservice.AccessibilityService;
 import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
@@ -24,10 +25,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Speak on Touch: while this accessibility service is enabled, a full-screen
- * touch layer is shown and whatever is under the finger is read aloud.
- * The service is switched on and off by the system (accessibility shortcut,
- * accessibility button, or Settings); there is no in-app button.
+ * Speak on Touch: the accessibility service runs quietly in the background.
+ * Each press of the accessibility button / shortcut toggles speak mode, which
+ * shows a full-screen touch layer and reads aloud whatever is under the finger.
  */
 public class SpeakOnTouchService extends AccessibilityService {
 
@@ -46,11 +46,18 @@ public class SpeakOnTouchService extends AccessibilityService {
                 if (SettingsManager.KEY_TTS_ENGINE.equals(key)) reinitTts();
             };
 
+    private final AccessibilityButtonController.AccessibilityButtonCallback buttonCallback =
+            new AccessibilityButtonController.AccessibilityButtonCallback() {
+                @Override
+                public void onClicked(AccessibilityButtonController controller) {
+                    toggleSpeakMode();
+                }
+            };
+
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private String lastSpokenText = null;
     private long lastTouchTime = 0;
-    private boolean disabling = false;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -60,8 +67,12 @@ public class SpeakOnTouchService extends AccessibilityService {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         SettingsManager.getInstance(this).registerListener(engineListener);
         initTts();
-        addTouchLayer();
-        vibrate(20, 80);
+        // Requires flagRequestAccessibilityButton in accessibility_service_config.xml.
+        // With it, the on-screen accessibility button / gesture / floating menu and
+        // (once the service is on) the volume-key shortcut call onClicked instead of
+        // toggling the whole service.
+        getAccessibilityButtonController().registerAccessibilityButtonCallback(
+                buttonCallback, highlightHandler);
     }
 
     @Override
@@ -74,21 +85,25 @@ public class SpeakOnTouchService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        getAccessibilityButtonController().unregisterAccessibilityButtonCallback(buttonCallback);
         SettingsManager.getInstance(this).unregisterListener(engineListener);
         highlightHandler.removeCallbacksAndMessages(null);
         removeHighlight();
-        if (touchLayer != null) {
-            removeTouchLayer();
-            vibrate(15, 60);
-        }
+        removeTouchLayer();
         shutdownTts();
         super.onDestroy();
     }
 
-    // ── Touch layer ───────────────────────────────────────────────────────────
+    // ── Speak mode (touch layer) ──────────────────────────────────────────────
 
-    private void addTouchLayer() {
+    private void toggleSpeakMode() {
+        if (touchLayer != null) stopSpeakMode();
+        else startSpeakMode();
+    }
+
+    private void startSpeakMode() {
         if (touchLayer != null) return;
+        lastSpokenText = null;
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -101,6 +116,13 @@ public class SpeakOnTouchService extends AccessibilityService {
         touchLayer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         touchLayer.setOnTouchListener(this::onTouchLayerTouch);
         windowManager.addView(touchLayer, lp);
+        vibrate(20, 80);
+    }
+
+    private void stopSpeakMode() {
+        if (touchLayer == null) return;
+        removeTouchLayer();
+        vibrate(15, 60);
     }
 
     private void removeTouchLayer() {
@@ -120,25 +142,10 @@ public class SpeakOnTouchService extends AccessibilityService {
             lastTouchTime = now;
             speakNodeAtCoordinates((int) event.getRawX(), (int) event.getRawY());
         } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
-            if (!disabling && SettingsManager.getInstance(this).getSpeakAutoDisable()) {
-                disabling = true;
-                // Let the last utterance finish; the service's TTS is shut down on destroy,
-                // so stop listening for touches now and turn off once speech is done.
-                removeTouchLayer();
-                vibrate(15, 60);
-                // Short initial delay: an utterance queued just now may not report isSpeaking yet
-                highlightHandler.postDelayed(this::disableWhenSpeechDone, 150);
-            }
+            // Removing only the touch layer; TTS keeps running, so the last item finishes speaking.
+            if (SettingsManager.getInstance(this).getSpeakAutoDisable()) stopSpeakMode();
         }
         return true;
-    }
-
-    private void disableWhenSpeechDone() {
-        if (tts != null && tts.isSpeaking()) {
-            highlightHandler.postDelayed(this::disableWhenSpeechDone, 100);
-        } else {
-            disableSelf();
-        }
     }
 
     private void vibrate(long ms, int amplitude) {
